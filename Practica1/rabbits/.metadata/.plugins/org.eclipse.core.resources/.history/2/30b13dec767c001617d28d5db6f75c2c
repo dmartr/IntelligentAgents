@@ -1,0 +1,151 @@
+import java.awt.Color;
+
+import uchicago.src.sim.engine.Schedule;
+import uchicago.src.sim.engine.SimModelImpl;
+import uchicago.src.sim.engine.SimInit;
+import uchicago.src.sim.gui.DisplaySurface;
+import uchicago.src.sim.gui.ColorMap;
+import uchicago.src.sim.gui.Value2DDisplay;
+
+/**
+ * Class that implements the simulation model for the rabbits grass
+ * simulation.  This is the first class which needs to be setup in
+ * order to run Repast simulation. It manages the entire RePast
+ * environment and the simulation.
+ *
+ * @author 
+ */
+
+
+public class RabbitsGrassSimulationModel extends SimModelImpl {		
+	
+		// Default values
+		private static final int XSIZE = 20;
+		private static final int YSIZE = 20;
+		private static final int NRABBITS = 10;
+		private static final int BIRTHTHRESHOLD = 5;
+		private static final int GRASSGROWTH = 5;
+		private static final int MAXTIME = 5;
+		
+		private int xSize = XSIZE;
+		private int ySize = YSIZE;
+		private int nRabbits = NRABBITS;
+		private int birthThreshold = BIRTHTHRESHOLD;
+		private int grassGrowth = GRASSGROWTH;
+		
+		private Schedule schedule;
+
+		private RabbitsGrassSimulationSpace rgSpace;
+		
+		private DisplaySurface displaySurf;
+
+		public static void main(String[] args) {
+			SimInit init = new SimInit();
+		    RabbitsGrassSimulationModel model = new RabbitsGrassSimulationModel();
+		    init.loadModel(model, "", false);
+		}
+
+		public void begin() {
+			// TODO Auto-generated method stub
+			  buildModel();
+			  buildSchedule();
+			  buildDisplay();
+			  
+			  displaySurf.display();
+		}
+		
+		public void buildModel(){
+			System.out.println("Building model");
+			rgSpace = new RabbitsGrassSimulationSpace(xSize, ySize);
+		}
+		
+		public void buildSchedule(){
+			System.out.println("Building schedule");
+		}
+		
+		public void buildDisplay(){
+			System.out.println("Building display");
+		    ColorMap map = new ColorMap();
+
+		    for(int i = 1; i<16; i++){
+		    	map.mapColor(i, new Color((int)(i * 8 + 127), 0, 0));
+		    }
+		    map.mapColor(0, Color.white);
+
+		    Value2DDisplay displayGrass = 
+		        new Value2DDisplay(rgSpace.getCurrentGrassSpace(), map);
+
+		    displaySurf.addDisplayable(displayGrass, "Grass");
+		}
+		
+		public String[] getInitParam() {
+			// TODO Auto-generated method stub
+			String[] initParams = { "XSize", "YSize", "NRabbits", "BirthThreshold", "GrassGrowth" };
+		    return initParams;
+		}
+
+		public String getName() {
+			// TODO Auto-generated method stub
+			return "Rabbits Grass Simulation";
+		}
+
+		public Schedule getSchedule() {
+			// TODO Auto-generated method stub
+			return schedule;
+		}
+
+		public void setup() {
+			// TODO Auto-generated method stub
+			System.out.println("Setting up");	
+			rgSpace = null;
+			
+			if (displaySurf != null){
+				displaySurf.dispose();
+			}
+			displaySurf = null;
+
+			displaySurf = new DisplaySurface(this, "Rabbit Grass Simulation Model Window 1");
+
+			registerDisplaySurface("Rabbit Grass Simulation Model Window 1", displaySurf);
+		}
+		
+		public int getXSize() {
+			return xSize;
+		}
+		
+		public void setXSize(int x) {
+			xSize = x;
+		}
+		
+		public int getYSize() {
+			return ySize;
+		}
+		
+		public void setYSize(int y) {
+			ySize = y;
+		}
+		
+		public int getNRabbits(){
+			return nRabbits;
+		}
+		
+		public void setNRabbits(int rabbits) {
+			nRabbits = rabbits;
+		}
+		
+		public int getBirthThreshold() {
+			return birthThreshold;
+		}
+		
+		public void setBirthThreshold(int threshold) {
+			birthThreshold = threshold;
+		}
+		
+		public int getGrassGrowth() {
+			return grassGrowth;
+		}
+		
+		public void setGrassGrowth(int rate) {
+			grassGrowth = rate;
+		}
+}
