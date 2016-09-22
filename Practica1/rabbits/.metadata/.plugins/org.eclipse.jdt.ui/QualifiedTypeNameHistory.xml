@@ -7,4 +7,10 @@
 <fullyQualifiedTypeName name="uchicago.src.sim.analysis.Sequence"/>
 <fullyQualifiedTypeName name="uchicago.src.sim.analysis.DataSource"/>
 <fullyQualifiedTypeName name="uchicago.src.sim.analysis.OpenSequenceGraph"/>
+<fullyQualifiedTypeName name="java.awt.Image"/>
+<fullyQualifiedTypeName name="java.awt.image.BufferedImage"/>
+<fullyQualifiedTypeName name="java.io.IOException"/>
+<fullyQualifiedTypeName name="javax.imageio.ImageIO"/>
+<fullyQualifiedTypeName name="java.io.File"/>
+<fullyQualifiedTypeName name="java.io.InputStream"/>
 </qualifiedTypeNameHistroy>

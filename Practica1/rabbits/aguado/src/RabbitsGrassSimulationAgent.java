@@ -2,6 +2,13 @@ import uchicago.src.sim.gui.Drawable;
 import uchicago.src.sim.space.Object2DGrid;
 import uchicago.src.sim.gui.SimGraphics;
 import java.awt.Color;
+import java.awt.Image;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+
+import javax.imageio.ImageIO;
 
 import uchicago.src.sim.gui.Drawable;
 import uchicago.src.sim.gui.SimGraphics;
@@ -13,7 +20,7 @@ import uchicago.src.sim.gui.SimGraphics;
  */
 
 public class RabbitsGrassSimulationAgent implements Drawable {
-	
+
 	private int x;
 	private int y;
 	private int direction;
@@ -24,17 +31,25 @@ public class RabbitsGrassSimulationAgent implements Drawable {
 	private static int IDNumber = 0;
 	private int ID;
 	private RabbitsGrassSimulationSpace rgSpace;
-	
+	Image img = null;
 	public RabbitsGrassSimulationAgent(int birthThreshold){
 		x = -1;
 	    y = -1;
 	    setDirection();
-	    energy = (int)Math.floor(Math.random() * 3) + 3;
+	    energy = (int)Math.floor(Math.random() * 10) + 5;
 	    //stepsToLive = maxTime;
 	    //STEPSLIFE = maxTime;
 	    BIRTHTHRESHOLD = birthThreshold;
 	    IDNumber++;
-	    ID = IDNumber;
+	    ID = IDNumber;    
+		ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+		InputStream input = classLoader.getResourceAsStream("bunny.png");
+		
+	    try {
+	    	img = ImageIO.read(input);
+			System.out.println(img);
+		} catch (IOException e) {
+		}
 	}
 	
 	public void setRabbitsGrassSimulationSpace(RabbitsGrassSimulationSpace space) {
@@ -70,8 +85,10 @@ public class RabbitsGrassSimulationAgent implements Drawable {
 
 	public void draw(SimGraphics G) {
 		// TODO Auto-generated method stub
-		if(energy > 1) G.drawFastRoundRect(Color.blue);
-		else G.drawFastRoundRect(Color.red);
+//		G.drawFastRoundRect(Color.blue);
+
+		G.drawImageToFit(img);
+
 	}
 
 	public int getX() {
