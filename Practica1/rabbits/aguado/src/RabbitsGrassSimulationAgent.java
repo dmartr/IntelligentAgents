@@ -32,22 +32,21 @@ public class RabbitsGrassSimulationAgent implements Drawable {
 	private int ID;
 	private RabbitsGrassSimulationSpace rgSpace;
 	Image img = null;
-	public RabbitsGrassSimulationAgent(int birthThreshold){
+	public RabbitsGrassSimulationAgent(int birthThreshold, double initEnergy){
 		x = -1;
 	    y = -1;
 	    setDirection();
-	    energy = (int)Math.floor(Math.random() * 10) + 5;
+	    energy = initEnergy;
 	    //stepsToLive = maxTime;
 	    //STEPSLIFE = maxTime;
 	    BIRTHTHRESHOLD = birthThreshold;
 	    IDNumber++;
 	    ID = IDNumber;    
+	    
 		ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 		InputStream input = classLoader.getResourceAsStream("bunny.png");
-		
 	    try {
 	    	img = ImageIO.read(input);
-			System.out.println(img);
 		} catch (IOException e) {
 		}
 	}
@@ -73,10 +72,6 @@ public class RabbitsGrassSimulationAgent implements Drawable {
 	public double getEnergy(){
 		return energy;
 	}
-
-//	public int getStepsToLive(){
-//		return stepsToLive;	  
-//	}
 		  
 	public void report(){
 		System.out.println(getID() + " at " + x + ", " + y + " has " + getEnergy() + " energy");
@@ -85,9 +80,8 @@ public class RabbitsGrassSimulationAgent implements Drawable {
 
 	public void draw(SimGraphics G) {
 		// TODO Auto-generated method stub
-//		G.drawFastRoundRect(Color.blue);
-
-		G.drawImageToFit(img);
+		G.drawFastRoundRect(Color.blue);
+		//G.drawImageToFit(img);
 
 	}
 
@@ -100,7 +94,7 @@ public class RabbitsGrassSimulationAgent implements Drawable {
 		// TODO Auto-generated method stub
 		return y;
 	}
-	public boolean step(){
+	public double step(){
 		int newX = 0;
 		int newY = 0;
 		switch (direction) {
@@ -129,10 +123,11 @@ public class RabbitsGrassSimulationAgent implements Drawable {
 
 	    if (tryReproduce()) {
 	    	energy /= 2;
-	    	return true;
+	    	if (energy < 0.5) energy = 0;
+	    	return energy;
 	    } else {
 	    	energy -= 0.5;
-	    	return false;
+	    	return 0;
 	    }
 	}
 	

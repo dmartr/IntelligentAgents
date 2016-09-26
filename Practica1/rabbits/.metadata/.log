@@ -48,3 +48,31 @@ Command-line arguments:  -os macosx -ws cocoa -arch x86_64 -product org.eclipse.
 
 !ENTRY org.eclipse.core.resources 2 10035 2016-09-19 19:09:18.882
 !MESSAGE The workspace exited with unsaved changes in the previous session; refreshing workspace to recover changes.
+!SESSION 2016-09-26 14:21:00.484 -----------------------------------------------
+eclipse.buildId=4.6.0.I20160606-1100
+java.version=1.8.0_65
+java.vendor=Oracle Corporation
+BootLoader constants: OS=macosx, ARCH=x86_64, WS=cocoa, NL=es_ES
+Framework arguments:  -product org.eclipse.epp.package.java.product -keyring /Users/nachoaguadoc/.eclipse_keyring
+Command-line arguments:  -os macosx -ws cocoa -arch x86_64 -product org.eclipse.epp.package.java.product -keyring /Users/nachoaguadoc/.eclipse_keyring
+
+!ENTRY org.eclipse.jdt.core 4 0 2016-09-26 14:21:11.885
+!MESSAGE Invalid ZIP archive: /Users/nachoaguadoc/Downloads/RepastJ/repast.jar
+
+!ENTRY org.eclipse.jdt.core 4 0 2016-09-26 14:21:11.895
+!MESSAGE Invalid ZIP archive: /Users/nachoaguadoc/Downloads/commons-math-1.1.jar
+
+!ENTRY org.eclipse.jdt.core 4 0 2016-09-26 14:21:11.896
+!MESSAGE Invalid ZIP archive: /Users/nachoaguadoc/Downloads/jdom.jar
+
+!ENTRY org.eclipse.jdt.core 4 0 2016-09-26 14:21:11.897
+!MESSAGE Invalid ZIP archive: /Users/nachoaguadoc/Downloads/log4j-1.2.15.jar
+
+!ENTRY org.eclipse.jdt.core 4 0 2016-09-26 14:21:11.898
+!MESSAGE Invalid ZIP archive: /Users/nachoaguadoc/Downloads/logist.jar
+
+!ENTRY org.eclipse.jdt.core 4 0 2016-09-26 14:21:11.898
+!MESSAGE Invalid ZIP archive: /Users/nachoaguadoc/Downloads/RepastJ/lib/colt.jar
+
+!ENTRY org.eclipse.jdt.core 4 0 2016-09-26 14:21:11.899
+!MESSAGE Invalid ZIP archive: /Users/nachoaguadoc/Downloads/RepastJ/lib/trove.jar

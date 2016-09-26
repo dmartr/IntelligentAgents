@@ -98,7 +98,7 @@ public class RabbitsGrassSimulationModel extends SimModelImpl implements Descrip
 			rgSpace = new RabbitsGrassSimulationSpace(xSize, ySize);
 		    rgSpace.spreadGrass(grassGrowth);
 			for(int i = 0; i < nRabbits; i++){
-			      addNewAgent();
+			      addNewAgent((int)Math.floor(Math.random() * 10)+5);
 			}
 			for(int i = 0; i < agentList.size(); i++){
 				RabbitsGrassSimulationAgent rgsa = (RabbitsGrassSimulationAgent)agentList.get(i);
@@ -114,9 +114,9 @@ public class RabbitsGrassSimulationModel extends SimModelImpl implements Descrip
 		        SimUtilities.shuffle(agentList);
 		        for(int i =0; i < agentList.size(); i++){
 		          RabbitsGrassSimulationAgent rgsa = (RabbitsGrassSimulationAgent) agentList.get(i);
-		          boolean reproduce = rgsa.step();
-		          if (reproduce) {
-		        	  addNewAgent();
+		          double reproduceEnergy = rgsa.step();
+		          if (reproduceEnergy != 0) {
+		        	  addNewAgent(reproduceEnergy);
 		          }
 		        }
 		        removeDeadAgents();
@@ -177,16 +177,20 @@ public class RabbitsGrassSimulationModel extends SimModelImpl implements Descrip
 			return "Rabbits Grass Simulation";
 		}
 		
-		private void addNewAgent(){
-		    RabbitsGrassSimulationAgent a = new RabbitsGrassSimulationAgent(birthThreshold);
-		    agentList.add(a);
-		    rgSpace.addAgent(a);
+		private void addNewAgent(double energy){
+			if (rgSpace.getTotalAgents() < xSize*ySize) {
+			    RabbitsGrassSimulationAgent a = new RabbitsGrassSimulationAgent(birthThreshold, energy);
+			    
+			    boolean added = rgSpace.addAgent(a);
+			    
+			    if (added) agentList.add(a);
+			}
 		}
 		
 		private void removeDeadAgents(){
 
 			for(int i = (agentList.size() - 1); i >= 0 ; i--){
-				RabbitsGrassSimulationAgent rgsa = (RabbitsGrassSimulationAgent)agentList.get(i);  
+				RabbitsGrassSimulationAgent rgsa = (RabbitsGrassSimulationAgent) agentList.get(i);  
 				if(rgsa.getEnergy() <= 0){
 			        rgSpace.removeAgentAt(rgsa.getX(), rgsa.getY());
 			        agentList.remove(i);

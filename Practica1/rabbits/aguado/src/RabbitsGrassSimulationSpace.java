@@ -24,8 +24,6 @@ public class RabbitsGrassSimulationSpace {
 	
 	public void setGrassEnergy(int energy) {
 		grassEnergy = energy;
-		System.out.println(grassEnergy);
-
 	}
 	
 	public void spreadGrass(int grass){
@@ -90,7 +88,6 @@ public class RabbitsGrassSimulationSpace {
 			}
 			count++;
 		}
-
 		return retVal;
 	}
 	 
