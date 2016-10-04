@@ -36,18 +36,18 @@ public class RabbitsGrassSimulationModel extends SimModelImpl implements Descrip
 	    return descriptors;
 	  } 
 	  
-		// Default values
+		// Default values of the initial variables
 		private static final int XSIZE = 20;
 		private static final int YSIZE = 20;
-		private static final int NRABBITS = 10;
-		private static final int BIRTHTHRESHOLD = 20;
-		private static final int GRASSGROWTH = 5;
-		private static final int GRASSENERGY = 5;
+		private static final int NRABBITS = 50;
+		private static final int BIRTHTHRESHOLD = 10;
+		private static final int GRASSGROWTH = 30;
+		private static final int GRASSENERGY = 15;
 		
 		private int xSize = XSIZE;
 		private int ySize = YSIZE;
 		private int nRabbits = NRABBITS;
-		private int birthThreshold=BIRTHTHRESHOLD;
+		private int birthThreshold = BIRTHTHRESHOLD;
 		private int grassGrowth = GRASSGROWTH;
 		private int grassEnergy = GRASSENERGY;
 
@@ -56,16 +56,15 @@ public class RabbitsGrassSimulationModel extends SimModelImpl implements Descrip
 		private RabbitsGrassSimulationSpace rgSpace;
 		private ArrayList agentList;
 		private DisplaySurface displaySurf;
-
 		public static void main(String[] args) {
 			SimInit init = new SimInit();
 		    RabbitsGrassSimulationModel model = new RabbitsGrassSimulationModel();
-
 		    init.loadModel(model, "", false);
 		}
 		
 		private OpenSequenceGraph amountOfGrassInSpace;
 		
+		// Energy amount information for the graph
 		class grassInSpace implements DataSource, Sequence {
 			public Object execute() {
 				return new Double(getSValue());   
@@ -74,6 +73,7 @@ public class RabbitsGrassSimulationModel extends SimModelImpl implements Descrip
 				return (double) rgSpace.getTotalGrass();
 			}
 		}
+		// Agents amount information for the graph
 		class agentsInSpace implements DataSource, Sequence {
 			public Object execute() {
 				return new Double(getSValue());   
@@ -93,6 +93,7 @@ public class RabbitsGrassSimulationModel extends SimModelImpl implements Descrip
 			  amountOfGrassInSpace.display();
 		}
 		
+		// The initial agents are born with a random energy between 5 and 15
 		public void buildModel(){
 			System.out.println("Building model");
 			rgSpace = new RabbitsGrassSimulationSpace(xSize, ySize);
@@ -114,6 +115,8 @@ public class RabbitsGrassSimulationModel extends SimModelImpl implements Descrip
 		        SimUtilities.shuffle(agentList);
 		        for(int i =0; i < agentList.size(); i++){
 		          RabbitsGrassSimulationAgent rgsa = (RabbitsGrassSimulationAgent) agentList.get(i);
+		          
+		          // If step() returns > 0, a new agent must be born with that amount of energy
 		          double reproduceEnergy = rgsa.step();
 		          if (reproduceEnergy != 0) {
 		        	  addNewAgent(reproduceEnergy);
@@ -132,8 +135,8 @@ public class RabbitsGrassSimulationModel extends SimModelImpl implements Descrip
 		        	countLivingAgents();
 		        }
 		    }
-
-		      
+		     
+		    // Every 10 iterations, count the number of living agents
 		    schedule.scheduleActionAtInterval(10, new RabbitsGrassSimulationCountLiving());
 		    
 		    class RabbitsGrassSimulationUpdateGrassInSpace extends BasicAction {
@@ -141,8 +144,18 @@ public class RabbitsGrassSimulationModel extends SimModelImpl implements Descrip
 		          amountOfGrassInSpace.step();
 		        }
 		      }
-
-		      schedule.scheduleActionAtInterval(1, new RabbitsGrassSimulationUpdateGrassInSpace());
+		    
+		    // Every iteration, update the graphs
+		    schedule.scheduleActionAtInterval(1, new RabbitsGrassSimulationUpdateGrassInSpace());
+		    
+		    class UpdateGrassEnergy extends BasicAction {
+		    	public void execute(){
+		        	rgSpace.setGrassEnergy(grassEnergy);
+		        }
+		    }
+		     
+		    // Every 10 iterations, count the number of living agents
+		    schedule.scheduleActionAtInterval(1, new UpdateGrassEnergy());
 		}
 		
 		public void buildDisplay(){
@@ -161,7 +174,7 @@ public class RabbitsGrassSimulationModel extends SimModelImpl implements Descrip
 
 		    displaySurf.addDisplayableProbeable(displayGrass, "Grass");
 		    displaySurf.addDisplayableProbeable(displayAgents, "Agents");
-		    
+		    System.out.println("Done Display");
 		    amountOfGrassInSpace.addSequence("Grass In Space", new grassInSpace());
 		    amountOfGrassInSpace.addSequence("Rabbits In Space", new agentsInSpace());
 		}
@@ -178,11 +191,12 @@ public class RabbitsGrassSimulationModel extends SimModelImpl implements Descrip
 		}
 		
 		private void addNewAgent(double energy){
+			
+			// If there's enough space
 			if (rgSpace.getTotalAgents() < xSize*ySize) {
 			    RabbitsGrassSimulationAgent a = new RabbitsGrassSimulationAgent(birthThreshold, energy);
 			    
 			    boolean added = rgSpace.addAgent(a);
-			    
 			    if (added) agentList.add(a);
 			}
 		}
@@ -218,27 +232,37 @@ public class RabbitsGrassSimulationModel extends SimModelImpl implements Descrip
 		public void setup() {
 			// TODO Auto-generated method stub
 			System.out.println("Setting up");
-		
-			modelManipulator = getModelManipulator();
-			modelManipulator.init();
-			modelManipulator.setEnabled(true);
-
-			BirthSlider birth = new BirthSlider();
-			birth.setFirstVal(birthThreshold);
-			modelManipulator.addSlider("BirthThreshold", 0, 20, 5, birth);
-
-			GrassSlider grass = new GrassSlider();
-			grass.setFirstVal(grassGrowth);
-			modelManipulator.addSlider("GrassGrowth", 0, 200, 20, grass);
 			
-			GrassEnergySlider energy = new GrassEnergySlider();
-			energy.setFirstVal(grassEnergy);
-			modelManipulator.addSlider("GrassEnergy", 0, 20, 5, energy);
+			// We define the sliders for the values
+			RangePropertyDescriptor d = new RangePropertyDescriptor("GrassEnergy", 
+                    0, 50, 5);
+			descriptors.put("GrassEnergy", d);
+			
+			RangePropertyDescriptor e = new RangePropertyDescriptor("GrassGrowth", 
+                    0, 100, 10);
+			descriptors.put("GrassGrowth", e);
+			
+			RangePropertyDescriptor f = new RangePropertyDescriptor("BirthThreshold", 
+                    0, 30, 5);
+			descriptors.put("BirthThreshold", f);
+			
+			RangePropertyDescriptor g = new RangePropertyDescriptor("NRabbits", 
+                    0, 200, 20);
+			descriptors.put("NRabbits", g);
+			
+			RangePropertyDescriptor h = new RangePropertyDescriptor("XSize", 
+                    0, 100, 10);
+			descriptors.put("XSize", h);
+			
+			RangePropertyDescriptor i = new RangePropertyDescriptor("YSize", 
+                    0, 100, 10);
+			descriptors.put("YSize", i);
 
 		    if (amountOfGrassInSpace != null){
-		      amountOfGrassInSpace.dispose();
+		    	amountOfGrassInSpace.dispose();
 		    }
 		    amountOfGrassInSpace = null;
+		   
 		    // Create Displays
 		    displaySurf = new DisplaySurface(this, "Rabbit Grass Simulation Model Window 2");
 		    amountOfGrassInSpace = new OpenSequenceGraph("Amount Of Grass In Space",this);
@@ -246,7 +270,6 @@ public class RabbitsGrassSimulationModel extends SimModelImpl implements Descrip
 		    // Register Displays
 		    registerDisplaySurface("Rabbit Grass Simulation Model Window 2", displaySurf);
 		    this.registerMediaProducer("Plot", amountOfGrassInSpace);
-		    
 		    
 			rgSpace = null;
 			agentList = new ArrayList();
@@ -257,25 +280,9 @@ public class RabbitsGrassSimulationModel extends SimModelImpl implements Descrip
 			displaySurf = null;
 
 			displaySurf = new DisplaySurface(this, "Rabbit Grass Simulation Model Window 1");
-			registerDisplaySurface("Rabbit Grass Simulation Model Window 1", displaySurf);
-		}
-		
+			System.out.println(displaySurf);
 
-		public class BirthSlider extends SliderListener {
-			public void execute() {
-				birthThreshold = value;			  
-			}
-		}
-		public class GrassSlider extends SliderListener {
-			public void execute() {
-				grassGrowth = value;			  
-			}
-		}
-		public class GrassEnergySlider extends SliderListener {
-			public void execute() {
-				grassEnergy = value;
-				if (rgSpace != null) rgSpace.setGrassEnergy(value);
-			}
+			registerDisplaySurface("Rabbit Grass Simulation Model Window 1", displaySurf);
 		}
 
 		public int getXSize() {

@@ -21,28 +21,28 @@ import uchicago.src.sim.gui.SimGraphics;
 
 public class RabbitsGrassSimulationAgent implements Drawable {
 
+	// We define the variables each agent has
 	private int x;
 	private int y;
 	private int direction;
 	private double energy;
-	//private int stepsToLive;
-	//private final int STEPSLIFE;
 	private final int BIRTHTHRESHOLD;
 	private static int IDNumber = 0;
 	private int ID;
+	
 	private RabbitsGrassSimulationSpace rgSpace;
 	Image img = null;
+	
 	public RabbitsGrassSimulationAgent(int birthThreshold, double initEnergy){
 		x = -1;
 	    y = -1;
 	    setDirection();
 	    energy = initEnergy;
-	    //stepsToLive = maxTime;
-	    //STEPSLIFE = maxTime;
 	    BIRTHTHRESHOLD = birthThreshold;
 	    IDNumber++;
 	    ID = IDNumber;    
 	    
+	    // Our bunnies will be represented by a .png 
 		ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 		InputStream input = classLoader.getResourceAsStream("bunny.png");
 	    try {
@@ -94,9 +94,13 @@ public class RabbitsGrassSimulationAgent implements Drawable {
 		// TODO Auto-generated method stub
 		return y;
 	}
+	
+	//Returns: 0 if there hasn't been a reproduction || The energy of the new born agent
 	public double step(){
 		int newX = 0;
 		int newY = 0;
+		
+		// The coordinates change depending on the new direction
 		switch (direction) {
         	case 1: newX = x;
         			newY = y+1;
@@ -116,11 +120,16 @@ public class RabbitsGrassSimulationAgent implements Drawable {
 	    newX = (newX + grid.getSizeX()) % grid.getSizeX();
 	    newY = (newY + grid.getSizeY()) % grid.getSizeY();
 	    
+	    // In case the move is valid, the agent takes the energy in that space
 	    if (tryMove(newX, newY)) {
 			energy += rgSpace.takeEnergyAt(x, y);
 	    }
+	    
 	    setDirection();
 
+	    // If the agent is able to reproduce, it loses half of its energy
+	    // The new born agent has the same amount of energy as the father (the other half)
+	    // If it can't reproduce, it loses 0.5 energy per step
 	    if (tryReproduce()) {
 	    	energy /= 2;
 	    	if (energy < 0.5) energy = 0;
@@ -131,8 +140,8 @@ public class RabbitsGrassSimulationAgent implements Drawable {
 	    }
 	}
 	
+	// Returns: true if the move is valid || false if there's already an agent at that position
 	private boolean tryMove(int newX, int newY){
-		
         RabbitsGrassSimulationAgent rgsa = rgSpace.getAgentAt(newX, newY);
         if (rgsa!= null){
         	return false;
@@ -141,6 +150,7 @@ public class RabbitsGrassSimulationAgent implements Drawable {
         }
 	}
 	
+	// If the energy of the agent is above the Birth Threshold, return true
 	private boolean tryReproduce() {
 		if (energy > BIRTHTHRESHOLD) {
 			return true;
