@@ -26,7 +26,7 @@ public class RabbitsGrassSimulationAgent implements Drawable {
 	private int y;
 	private int direction;
 	private double energy;
-	private final int BIRTHTHRESHOLD;
+	private int birthThreshold;
 	private static int IDNumber = 0;
 	private int ID;
 	
@@ -38,7 +38,7 @@ public class RabbitsGrassSimulationAgent implements Drawable {
 	    y = -1;
 	    setDirection();
 	    energy = initEnergy;
-	    BIRTHTHRESHOLD = birthThreshold;
+	    this.birthThreshold = birthThreshold;
 	    IDNumber++;
 	    ID = IDNumber;    
 	    
@@ -80,8 +80,8 @@ public class RabbitsGrassSimulationAgent implements Drawable {
 
 	public void draw(SimGraphics G) {
 		// TODO Auto-generated method stub
-		G.drawFastRoundRect(Color.blue);
-		//G.drawImageToFit(img);
+		//G.drawFastRoundRect(Color.blue);
+		G.drawImageToFit(img);
 
 	}
 
@@ -152,7 +152,7 @@ public class RabbitsGrassSimulationAgent implements Drawable {
 	
 	// If the energy of the agent is above the Birth Threshold, return true
 	private boolean tryReproduce() {
-		if (energy > BIRTHTHRESHOLD) {
+		if (energy > birthThreshold) {
 			return true;
 		} else {
 			return false;

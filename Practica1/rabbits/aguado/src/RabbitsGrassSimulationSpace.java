@@ -10,8 +10,7 @@ public class RabbitsGrassSimulationSpace {
 	private Object2DGrid agentSpace;
 	
 	//Will be updated when the slider changes
-	private int grassEnergy = 1;
-	
+	private final int MAXGRASS = 100;
 	public RabbitsGrassSimulationSpace(int xSize, int ySize){
 		grassSpace = new Object2DGrid(xSize, ySize);
 		agentSpace = new Object2DGrid(xSize, ySize);
@@ -22,12 +21,8 @@ public class RabbitsGrassSimulationSpace {
 	    }
 	 }
 	
-	public void setGrassEnergy(int energy) {
-		grassEnergy = energy;
-	}
-	
-	public void spreadGrass(int grass){
-	    // Randomly place money in moneySpace
+	public void spreadGrass(int grass, int grassEnergy){
+	    // Randomly place grass
 		for(int i = 0; i < grass; i++){
 
 			// Choose coordinates
@@ -35,8 +30,12 @@ public class RabbitsGrassSimulationSpace {
 			int y = (int)(Math.random()*(grassSpace.getSizeY()));
 			
 			int currentValue = getEnergyAt(x,y);
-			// Replace the Integer object with another one with the new value
-			grassSpace.putObjectAt(x,y,new Integer(currentValue + grassEnergy));
+			if (currentValue <= MAXGRASS && currentValue+grassEnergy<=MAXGRASS) {
+				// Replace the Integer object with another one with the new value
+				grassSpace.putObjectAt(x,y,new Integer(currentValue + grassEnergy));
+			} else if (currentValue <= MAXGRASS && currentValue+grassEnergy>MAXGRASS) {
+				grassSpace.putObjectAt(x,y,new Integer(MAXGRASS));
+			}
 	    }
 	}
 		
