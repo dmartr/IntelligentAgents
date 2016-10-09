@@ -26,9 +26,9 @@ public class ReactiveTemplate implements ReactiveBehavior {
 	private double pPickup;
 	private int numActions;
 	private Agent myAgent;
-	double [][] probabilities;
+	public double [][] probabilities;
 	List<City> states;
-	int [][] rewards;
+	public int [][] rewards;
 	
 	@Override
 	public void setup(Topology topology, TaskDistribution td, Agent agent) {
@@ -43,15 +43,16 @@ public class ReactiveTemplate implements ReactiveBehavior {
 		this.myAgent = agent;
 		
 		states = topology.cities();
-	
+		
+		probabilities = new double[states.size()][states.size()];
+		rewards = new int[states.size()][states.size()];
+		
 		for (City to : topology){
 			for (City from : topology){
-			probabilities [to.id][from.id] = td.probability(from, to);
-			rewards [to.id][from.id] = td.reward(from, to);
+				probabilities[to.id][from.id] = td.probability(from, to);
+				rewards[to.id][from.id] = td.reward(from, to);
 			}
 		}
-		
-		
 	}
 	
 	@Override
@@ -80,9 +81,9 @@ public class ReactiveTemplate implements ReactiveBehavior {
 		int cost = (int)(5 * p.totalDistance());
 		if (action instanceof Action.Pickup){
 			//coger task de la accion
-			City pstate = task.deliveryCity; 
-			int r = rewards[state.id][pstate.id]-cost;
-			return r;
+//			City pstate = task.deliveryCity; 
+//			int r = rewards[state.id][pstate.id]-cost;
+			return 0;
 		} else {
 			return -cost;
 		}
