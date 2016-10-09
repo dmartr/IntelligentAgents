@@ -8,11 +8,12 @@ import logist.behavior.ReactiveBehavior;
 import logist.plan.Action;
 import logist.plan.Action.Move;
 import logist.plan.Action.Pickup;
+import logist.plan.Plan;
 import logist.task.Task;
 import logist.task.TaskDistribution;
 import logist.topology.Topology;
 import logist.topology.Topology.City;
-import uchicago.src.collection.Pair;
+
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,10 +28,7 @@ public class ReactiveTemplate implements ReactiveBehavior {
 	private Agent myAgent;
 	double [][] probabilities;
 	List<City> states;
-	List<City> initStates;
-	List<Action> actions;
 	int [][] rewards;
-	Map<Map<City, Action>, Integer> rewardTable;
 	
 	@Override
 	public void setup(Topology topology, TaskDistribution td, Agent agent) {
@@ -44,12 +42,7 @@ public class ReactiveTemplate implements ReactiveBehavior {
 		this.numActions = 0;
 		this.myAgent = agent;
 		
-		List<Vehicle> vehicles = agent.vehicles();
 		states = topology.cities();
-		
-		for(int i = 0; i < vehicles.size(); i++){
-			initStates.add(vehicles.get(i).homeCity());
-		}
 	
 		for (City to : topology){
 			for (City from : topology){
@@ -81,4 +74,29 @@ public class ReactiveTemplate implements ReactiveBehavior {
 		return action;
 	}
 	
+	public double getR(City state, Action action){
+		Plan p = new Plan(state);
+		p.append(action);
+		int cost = (int)(5 * p.totalDistance());
+		if (action instanceof Action.Pickup){
+			//coger task de la accion
+			City pstate = task.deliveryCity; 
+			int r = rewards[state.id][pstate.id]-cost;
+			return r;
+		} else {
+			return -cost;
+		}
+	}
+	
+	public double getT(City state, Action action, City pstate){
+		double p = 0;
+		if(action instanceof Action.Move){
+			p = probabilities[state.id][pstate.id];
+		}else if(action instanceof Action.Pickup){
+			if(equals(pstate)){  //añadir ciudad destino de la accion
+				p = 1;
+			}
+		}
+		return p;
+	}
 }
