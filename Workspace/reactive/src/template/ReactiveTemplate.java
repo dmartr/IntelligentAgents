@@ -45,9 +45,12 @@ public class ReactiveTemplate implements ReactiveBehavior {
 
 	public Map<String, Double> strategy_values = new HashMap<String, Double>();
 	public Map<String, ReactiveAction> strategy_actions = new HashMap<String, ReactiveAction>();
-//	public double[] V;
-//	public double[][] Q;
-//	public ReactiveAction[] strategy;
+	public Map<String, ReactiveAction> old_strategy_actions = new HashMap<String, ReactiveAction>();	
+
+	public Map<String, Double> v = new HashMap<String, Double>();
+	
+	public Map<String, Double> action_q = new HashMap<String, Double>();
+	public Map<String, Map<String, Double>> q = new HashMap<String, Map<String, Double>>();
 	
 	public void generateDistributions(Topology topology, TaskDistribution td) {
 		probabilities = new double[cities.size()][cities.size()];
@@ -56,11 +59,14 @@ public class ReactiveTemplate implements ReactiveBehavior {
 		for (City from : topology){
 			neighbours_prob.put(from.name, 0.0);
 			neighbours_num.put(from.name, 0);
-			cities_prob.put(from.name, 0.0);
+			cities_prob.put(from.name, 1.0);
 			
 			for (City to : topology){
+				probabilities[from.id][to.id] = td.probability(from, to);
+				rewards[from.id][to.id] = td.reward(from, to);
+				costs[from.id][to.id] = from.distanceTo(to)*5;
 				double val_city = cities_prob.get(from.name);
-				val_city += probabilities[from.id][to.id];
+				val_city *= 1-probabilities[from.id][to.id];
 				cities_prob.put(from.name, val_city);
 				if (from.hasNeighbor(to)) {
 					double val_prob = neighbours_prob.get(from.name);
@@ -70,9 +76,6 @@ public class ReactiveTemplate implements ReactiveBehavior {
 					val_num++;
 					neighbours_num.put(from.name, val_num);
 				}
-				probabilities[from.id][to.id] = td.probability(from, to);
-				rewards[from.id][to.id] = td.reward(from, to);
-				costs[to.id][from.id] = from.distanceTo(to)*5;
 			}
 		}
 		
@@ -89,9 +92,16 @@ public class ReactiveTemplate implements ReactiveBehavior {
 			ReactiveState move_state = new ReactiveState(from);
 			states.put(move_state.id, move_state);
 		}
+		for(Map.Entry<String, ReactiveAction> ac : actions.entrySet()) {
+			v.put(ac.getKey(), 0.0);	
+		}
 		for(Map.Entry<String, ReactiveState> st : states.entrySet()) {
 			strategy_values.put(st.getValue().id, 0.0);
+			v.put(st.getValue().id, 0.0);
 			strategy_actions.put(st.getValue().id, null);
+			old_strategy_actions.put(st.getValue().id, null);
+			q.put(st.getValue().id, v);
+
 		}
 	}
 	
@@ -111,15 +121,14 @@ public class ReactiveTemplate implements ReactiveBehavior {
 			} else {
 				return 1 - cities_prob.get(nextState.origin.name);
 			}
-		} else if (!action.isPickup() && !initState.isPickup() && initState.origin != action.destination && initState.areNeighbors(action.destination)) {
+		} else if (!action.isPickup() && !initState.isPickup() && initState.origin != action.destination && initState.origin.hasNeighbor(action.destination)) {
 			if (nextState.isPickup()) {
 				return probabilities[nextState.origin.id][nextState.destination.id];
 			} else {
 				return 1 - cities_prob.get(nextState.origin.name);
 			}
-		} else {
-			return 0;		
-		}
+		} 
+		return 0;
 	}
 	
 	public double getR(ReactiveState state, ReactiveAction action){
@@ -131,51 +140,72 @@ public class ReactiveTemplate implements ReactiveBehavior {
 		} else if (!action.isPickup() && !state.isPickup()){
 			City to = action.destination;
 			r = -costs[from.id][to.id];
-		} else {
-			r = 0.0;
+		} else if (state.isPickup() && !action.isPickup()) {
+			City to = action.destination;
+			r = -costs[from.id][to.id];
 		}
 		return r;
 	}
-	public Map<String, ReactiveAction> getStrategy() {
+	
+	public boolean isActionValid(ReactiveState state, ReactiveAction action) {
+		boolean result = true;
+		if (!state.isPickup() && action.isPickup()) result = false;
+		else if (!action.isPickup() && state.origin.id == action.destination.id) result = false;
+		else if (!state.isPickup()) {
+			
+			if (!state.origin.hasNeighbor(action.destination)) {
+				result = false;
+			}
+		}
+		return result;
+	}
+	public void getStrategy() {
 		boolean keep_going = true;
-		int counter = 0;
 		while (keep_going) {
-			counter++;
 			Map<String, Double> old_strategy_values = new HashMap<String,Double>(strategy_values);
 			for(Map.Entry<String, ReactiveState> initial_states : states.entrySet()) {
-			    String initial_state_id = initial_states.getKey();
-			    ReactiveState initial_state = initial_states.getValue();
-			    double Q = 0.0;
-			    for(Map.Entry<String, ReactiveAction> actions : actions.entrySet()) {
-			    	String action_id = actions.getKey();
+				ReactiveState initial_state = initial_states.getValue();
+				String initial_state_id = initial_states.getKey();
+				double max_q = Double.NEGATIVE_INFINITY;
+				ReactiveAction best_action = null;
+				for(Map.Entry<String, ReactiveAction> actions : actions.entrySet()) {
+
 					ReactiveAction action = actions.getValue();
-			    	double R = getR(initial_state, action);
-					double sum = 0;
+					
+					double total = 0;
 					for(Map.Entry<String, ReactiveState> final_states : states.entrySet()) {
+						ReactiveState final_state = final_states.getValue();
 						String final_state_id = final_states.getKey();
-					    ReactiveState final_state = final_states.getValue();
-					    double T = getT(initial_state, action, final_state);
-					    T *= strategy_values.get(final_state.id);
-					    sum += T;
+						double v_value = v.get(final_state_id);
+						double t_value = getT(initial_state, action, final_state);
+						total += v_value*t_value;
 					}
-					double finalQ = R + pPickup*sum;
-					if (finalQ > Q) {
-						Q = finalQ;
-						strategy_values.put(initial_state.id, Q);
-						strategy_actions.put(initial_state.id, action);
+					double r_value = getR(initial_state, action);
+					double q_value = r_value + pPickup*total;
+					if (!isActionValid(initial_state, action)) {
+						action_q.put(action.id, Double.NEGATIVE_INFINITY);
+						continue;
 					}
-			    }
+					action_q.put(action.id, q_value);
+					
+					if (q_value > max_q) {
+						max_q = q_value;
+						best_action = action;
+					}
+				}
+				q.put(initial_state_id, action_q);
+				strategy_values.put(initial_state_id, max_q);
+				strategy_actions.put(initial_state_id, best_action);
 			}
 			double max_difference = 0.0;
-			for(Map.Entry<String, Double> values : strategy_values.entrySet()) {
-				String id = values.getKey();
-				double difference = Math.abs(strategy_values.get(id) - old_strategy_values.get(id));
+			for(Map.Entry<String, ReactiveState> st : states.entrySet()) {
+				double difference = Math.abs(strategy_values.get(st.getKey()) - old_strategy_values.get(st.getKey()));
 				if (difference > max_difference) max_difference = difference;
 			}
-			
-			if (max_difference < 0.00000001) keep_going = false;
+			if (max_difference < 0.000000000000000001) {
+				keep_going = false;
+			}
 		}
-		return strategy_actions;
 	}
 	
 	@Override
@@ -195,30 +225,45 @@ public class ReactiveTemplate implements ReactiveBehavior {
 		generateStates(topology);
 		generateActions(topology);
 		getStrategy();
+
+//		for(Map.Entry<String, ReactiveAction> st : strategy_actions.entrySet()) {
+//			
+//			System.out.println(st.getValue().id + " - "+ st.getKey());
+//		}
+		
+//		for(Map.Entry<String, Map<String, Double>> test : q.entrySet()) {
+//			System.out.println("Para el estado " + test.getKey() + ": ");
+//			Map<String, Double> a = test.getValue();
+//			for(Map.Entry<String, Double> b : a.entrySet()) {
+//				System.out.println("Acción " + b.getKey() + " es " + b.getValue());
+//			}
+//		}
+		
+//		for(Map.Entry<String, ReactiveAction> a : strategy_actions.entrySet()) {
+//			System.out.println("Estado: " + a.getKey() + " Acción: " + a.getValue().id);
+//		}
 	}
 	
 	@Override
 	public Action act(Vehicle vehicle, Task availableTask) {
 		Action action;
-		//City pickupCity = availableTask.pickupCity;
-		// City deliveryCity = availableTask.deliveryCity;
+
 		if (availableTask == null) {
 			City currentCity = vehicle.getCurrentCity();
 			ReactiveState state = new ReactiveState(currentCity);
 			ReactiveAction reactive_action = strategy_actions.get(state.id);
 			//System.out.println("I am in " + currentCity.name + " and there are no tasks. Moving to " + reactive_action.destination );
-
 			action = new Move(reactive_action.destination);
 		} else {
 			City currentCity = vehicle.getCurrentCity();
 			ReactiveState state = new ReactiveState(currentCity, availableTask.deliveryCity);
-            String statekey1 = state.id;
-            if(strategy_actions.get(statekey1).pickup) {
+            String state_id = state.id;
+            if(strategy_actions.get(state_id).pickup) {
     			//System.out.println("I am in " + currentCity.name + " and I take the task to " + availableTask.deliveryCity );
                 action = new Pickup(availableTask);
             } else {
-    			System.out.println("I am in " + currentCity.name + " and I don't take the task to " + availableTask.deliveryCity + ". Moving to " + strategy_actions.get(statekey1).destination );
-                action = new Move(strategy_actions.get(statekey1).destination);
+    			System.out.println("I am in " + currentCity.name + " and I don't take the task to " + availableTask.deliveryCity + ". Moving to " + strategy_actions.get(state_id).destination );
+    			action = new Move(strategy_actions.get(state_id).destination);
             }		
          }
 		
@@ -229,8 +274,6 @@ public class ReactiveTemplate implements ReactiveBehavior {
 		
 		return action;
 	}
-
-
 }
 
 
