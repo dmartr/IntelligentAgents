@@ -23,7 +23,7 @@ import java.util.Map;
 
 public class ReactiveTemplate implements ReactiveBehavior {
 
-	
+	private TaskDistribution td;
 	private Random random;
 	private double pPickup;
 	private int numActions;
@@ -115,53 +115,44 @@ public class ReactiveTemplate implements ReactiveBehavior {
 	}
 	
 	public double getT(ReactiveState initState, ReactiveAction action, ReactiveState nextState) {
-		if (action.isPickup() && initState.isPickup() && initState.destination == nextState.origin){
-			if (nextState.isPickup()) {
-				return probabilities[nextState.origin.id][nextState.destination.id];
-			} else {
-				return 1 - cities_prob.get(nextState.origin.name);
+		
+		if (action.isPickup() && initState.isPickup() && initState.destination.equals(nextState.origin)) {
+			return td.probability(nextState.origin, nextState.destination);
+		} else if (!initState.isPickup() && !action.isPickup() && action.destination.equals(nextState.origin)) {
+			if (action.destination.hasNeighbor(initState.origin)) {
+				return td.probability(nextState.origin, nextState.destination);
 			}
-		} else if (!action.isPickup() && !initState.isPickup() && initState.origin != action.destination && initState.origin.hasNeighbor(action.destination)) {
-			if (nextState.isPickup()) {
-				return probabilities[nextState.origin.id][nextState.destination.id];
-			} else {
-				return 1 - cities_prob.get(nextState.origin.name);
-			}
-		} 
+		}
 		return 0;
 	}
 	
 	public double getR(ReactiveState state, ReactiveAction action){
 		double r = 0.0;
 		City from = state.origin;
-		if (action.isPickup() && state.isPickup()){
-			City to = state.destination;
-			r = rewards[from.id][to.id] - costs[from.id][to.id];
-		} else if (!action.isPickup() && !state.isPickup()){
-			City to = action.destination;
-			r = -costs[from.id][to.id];
-		} else if (state.isPickup() && !action.isPickup()) {
-			City to = action.destination;
-			r = -costs[from.id][to.id];
-		}
+		if (action.isPickup()){
+			if (state.isPickup()){
+				City to = state.destination;
+				r = rewards[from.id][to.id] - costs[from.id][to.id];
+			} else {
+				r = Double.NEGATIVE_INFINITY;
+			}
+		} else {
+			if (state.origin.hasNeighbor(action.destination)) {
+				City to = action.destination;
+				r = - costs[from.id][to.id];
+			} else {
+				r = Double.NEGATIVE_INFINITY;
+			}
+			
+		} 
 		return r;
 	}
 	
-	public boolean isActionValid(ReactiveState state, ReactiveAction action) {
-		boolean result = true;
-		if (!state.isPickup() && action.isPickup()) result = false;
-		else if (!action.isPickup() && state.origin.id == action.destination.id) result = false;
-		else if (!state.isPickup()) {
-			
-			if (!state.origin.hasNeighbor(action.destination)) {
-				result = false;
-			}
-		}
-		return result;
-	}
 	public void getStrategy() {
 		boolean keep_going = true;
+		int counter = 0;
 		while (keep_going) {
+			counter++;
 			Map<String, Double> old_strategy_values = new HashMap<String,Double>(strategy_values);
 			for(Map.Entry<String, ReactiveState> initial_states : states.entrySet()) {
 				ReactiveState initial_state = initial_states.getValue();
@@ -172,22 +163,18 @@ public class ReactiveTemplate implements ReactiveBehavior {
 
 					ReactiveAction action = actions.getValue();
 					
-					double total = 0;
+					double total = 0.0;
 					for(Map.Entry<String, ReactiveState> final_states : states.entrySet()) {
 						ReactiveState final_state = final_states.getValue();
 						String final_state_id = final_states.getKey();
-						double v_value = v.get(final_state_id);
+						double v_value = strategy_values.get(final_state_id);
 						double t_value = getT(initial_state, action, final_state);
 						total += v_value*t_value;
 					}
 					double r_value = getR(initial_state, action);
 					double q_value = r_value + pPickup*total;
-					if (!isActionValid(initial_state, action)) {
-						action_q.put(action.id, Double.NEGATIVE_INFINITY);
-						continue;
-					}
 					action_q.put(action.id, q_value);
-					
+					//System.out.println("Acción " + action.id + " es " + q_value);
 					if (q_value > max_q) {
 						max_q = q_value;
 						best_action = action;
@@ -202,15 +189,18 @@ public class ReactiveTemplate implements ReactiveBehavior {
 				double difference = Math.abs(strategy_values.get(st.getKey()) - old_strategy_values.get(st.getKey()));
 				if (difference > max_difference) max_difference = difference;
 			}
-			if (max_difference < 0.000000000000000001) {
+			if (max_difference <= 1) {
 				keep_going = false;
 			}
 		}
+		System.out.println("Iterations: " + counter);
+
 	}
 	
 	@Override
 	public void setup(Topology topology, TaskDistribution td, Agent agent) {
 		this.topology = topology;
+		this.td = td;
 		// Reads the discount factor from the agents.xml file.
 		// If the property is not present it defaults to 0.95
 		Double discount = agent.readProperty("discount-factor", Double.class, 0.95);
