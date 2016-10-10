@@ -22,6 +22,6 @@ public class ReactiveAction {
 	}
 	
 	public boolean isPickup() {
-		return pickup;
+		return this.pickup;
 	}
 }
