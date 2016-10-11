@@ -12,7 +12,12 @@ import logist.task.Task;
 import logist.task.TaskDistribution;
 import logist.topology.Topology;
 import logist.topology.Topology.City;
-
+import uchicago.src.sim.analysis.Plot;
+/**
+ * Lazy Agent for tests
+ * Only accepts tasks under a given distance
+ * @author Ignacio Aguado, Darío Martínez
+ */
 public class LazyTemplate implements ReactiveBehavior {
 
 	private Random random;
@@ -20,6 +25,7 @@ public class LazyTemplate implements ReactiveBehavior {
 	private int numActions;
 	private Agent myAgent;
 	private double maxDistance;
+	
 	@Override
 	public void setup(Topology topology, TaskDistribution td, Agent agent) {
 

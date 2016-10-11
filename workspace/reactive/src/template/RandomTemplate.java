@@ -12,14 +12,18 @@ import logist.task.Task;
 import logist.task.TaskDistribution;
 import logist.topology.Topology;
 import logist.topology.Topology.City;
-
+import uchicago.src.sim.analysis.Plot;
+/**
+ * Random Agent for tests
+ * It has a given probability to not accept a task
+ * 
+ */
 public class RandomTemplate implements ReactiveBehavior {
 
 	private Random random;
 	private double pPickup;
 	private int numActions;
 	private Agent myAgent;
-
 	@Override
 	public void setup(Topology topology, TaskDistribution td, Agent agent) {
 
@@ -32,6 +36,7 @@ public class RandomTemplate implements ReactiveBehavior {
 		this.pPickup = discount;
 		this.numActions = 0;
 		this.myAgent = agent;
+
 	}
 
 	@Override

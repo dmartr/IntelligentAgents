@@ -12,6 +12,7 @@ import logist.task.Task;
 import logist.task.TaskDistribution;
 import logist.topology.Topology;
 import logist.topology.Topology.City;
+import uchicago.src.sim.analysis.Plot;
 
 import java.util.HashMap;
 import java.util.List;
@@ -22,7 +23,6 @@ import java.util.Map;
  * @author Ignacio Aguado, Darío Martínez
  */
 public class ReactiveTemplate implements ReactiveBehavior {
-
 	private TaskDistribution td;
 	private Random random;
 	private double pPickup;
