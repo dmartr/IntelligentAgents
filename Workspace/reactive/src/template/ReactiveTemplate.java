@@ -17,6 +17,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Reactive Agent
+ * @author Ignacio Aguado, Darío Martínez
+ */
 public class ReactiveTemplate implements ReactiveBehavior {
 
 	private TaskDistribution td;
@@ -37,6 +41,10 @@ public class ReactiveTemplate implements ReactiveBehavior {
 	public Map<String, Double> strategy_values = new HashMap<String, Double>();
 	public Map<String, ReactiveAction> strategy_actions = new HashMap<String, ReactiveAction>();
 	
+	/**
+	 *Store the rewards in int [][] rewards
+	 *Store the costs in double [][] costs;
+	 */
 	public void generateDistributions() {
 		rewards = new int[cities.size()][cities.size()];
 		costs = new double[cities.size()][cities.size()];
@@ -48,6 +56,12 @@ public class ReactiveTemplate implements ReactiveBehavior {
 		}
 	}
 	
+	/**
+	 * Generate the ReactiveState objects
+	 * Store them in the HashMap<String, ReactiveState> states
+	 * Initializes HashMap<String, Double> strategy_values (Stores max(Q) for every state ID)
+	 * Initializes HashMap<String, Action> strategy_actions (Stores action to take for every state ID)
+	 */
 	public void generateStates() {
 		for (City from : topology){
 			for (City to : topology){
@@ -66,6 +80,10 @@ public class ReactiveTemplate implements ReactiveBehavior {
 		}
 	}
 	
+	/**
+	 * Generate the ReactiveAction objects
+	 * Store them in the HashMap<String, ReactiveAction> actions
+	 */
 	public void generateActions() {
 		ReactiveAction pickup_action = new ReactiveAction();
 		actions.put(pickup_action.id, pickup_action);
@@ -75,11 +93,22 @@ public class ReactiveTemplate implements ReactiveBehavior {
 		}
 	}
 	
+	/**
+	 * Transitions Table 
+	 * @return Probability of being in "nextState" taking the action "action" from state "initState"
+	 * 
+	 * @param initState Current State
+	 * @param action Action taken from the current State
+	 * @param nextState Next State
+	 */
 	public double getT(ReactiveState initState, ReactiveAction action, ReactiveState nextState) {
 		
+		// If there's a task and you take it, you end up in the destination of the task
 		if (action.isPickup() && initState.isPickup() && initState.destination.equals(nextState.origin)) {
 			return td.probability(nextState.origin, nextState.destination);
-		} else if (!initState.isPickup() && !action.isPickup() && action.destination.equals(nextState.origin)) {
+		} 
+		// If there isn't a task and you end up moving to a neighbor city
+		else if (!initState.isPickup() && !action.isPickup() && action.destination.equals(nextState.origin)) {
 			if (action.destination.hasNeighbor(initState.origin)) {
 				return td.probability(nextState.origin, nextState.destination);
 			}
@@ -87,21 +116,34 @@ public class ReactiveTemplate implements ReactiveBehavior {
 		return 0;
 	}
 	
+	/**
+	 * Rewards Table
+	 * @return Final reward for performing "action" from "state" (either positive or negative)
+	 * 
+	 * @param initState Current State
+	 * @param action Action taken from the current State
+	 */
 	public double getR(ReactiveState state, ReactiveAction action){
 		double r = 0.0;
 		City from = state.origin;
+		//If you pick up a task
 		if (action.isPickup()){
+			// If there was a task available, return reward-cost
 			if (state.isPickup()){
 				City to = state.destination;
 				r = rewards[from.id][to.id] - costs[from.id][to.id];
 			} else {
+				// Impossible case, must penalize it (there wasn't a task but you tried to take one)
 				r = Double.NEGATIVE_INFINITY;
 			}
+		// You move without pickin up a task
 		} else {
+			// If the next city is a neighbor, return cost
 			if (state.origin.hasNeighbor(action.destination)) {
 				City to = action.destination;
 				r = - costs[from.id][to.id];
 			} else {
+				// Impossible case, must penalize it (you can't move to a not neighbor city without a task)
 				r = Double.NEGATIVE_INFINITY;
 			}
 			
@@ -109,9 +151,17 @@ public class ReactiveTemplate implements ReactiveBehavior {
 		return r;
 	}
 	
+	/**
+	 * Reinforcement Learning Algorithm
+	 * When finished, updates strategy_actions with the best strategy for the agent 
+	 * 
+	 */
 	public void getStrategy() {
 		boolean keep_going = true;
 		int counter = 0;
+		// Maximum error in the results
+		double epsilon = 0.01;
+		
 		while (keep_going) {
 			counter++;
 			Map<String, Double> old_strategy_values = new HashMap<String,Double>(strategy_values);
@@ -135,6 +185,7 @@ public class ReactiveTemplate implements ReactiveBehavior {
 					double r_value = getR(initial_state, action);
 					double q_value = r_value + pPickup*total;
 
+					// Only save it if it's a maximum for the state
 					if (q_value > max_q) {
 						max_q = q_value;
 						best_action = action;
@@ -143,12 +194,14 @@ public class ReactiveTemplate implements ReactiveBehavior {
 				strategy_values.put(initial_state_id, max_q);
 				strategy_actions.put(initial_state_id, best_action);
 			}
+			
 			double max_difference = 0.0;
 			for(Map.Entry<String, ReactiveState> st : states.entrySet()) {
 				double difference = Math.abs(strategy_values.get(st.getKey()) - old_strategy_values.get(st.getKey()));
 				if (difference > max_difference) max_difference = difference;
 			}
-			if (max_difference <= 1) keep_going = false;
+			// Error satisfies condition. Finish algorithm.
+			if (max_difference <= epsilon) keep_going = false;
 		}
 		System.out.println("Final number of iterations: " + counter);
 
@@ -181,20 +234,24 @@ public class ReactiveTemplate implements ReactiveBehavior {
 	@Override
 	public Action act(Vehicle vehicle, Task availableTask) {
 		Action action;
-
+		
+		//If there's no task available, we look for the best neighbor to move to.
 		if (availableTask == null) {
 			City currentCity = vehicle.getCurrentCity();
 			ReactiveState state = new ReactiveState(currentCity);
 			ReactiveAction reactive_action = strategy_actions.get(state.id);
 			System.out.println(currentCity.name + ": NO TASKS. MOVING TO " + reactive_action.destination);
 			action = new Move(reactive_action.destination);
+		//If there's a task available, we check whether is better to pick it up or move to a certain neighbor
 		} else {
 			City currentCity = vehicle.getCurrentCity();
 			ReactiveState state = new ReactiveState(currentCity, availableTask.deliveryCity);
             String state_id = state.id;
+            //It's better to pick up the task
             if(strategy_actions.get(state_id).pickup) {
     			System.out.println(currentCity.name + ": TASK TO " + availableTask.deliveryCity + ". ACCEPTED.");
                 action = new Pickup(availableTask);
+            //better to move to a certain neighbor
             } else {
     			System.out.println(currentCity.name + ": TASK TO " + availableTask.deliveryCity + ". DENIED. MOVING TO " + strategy_actions.get(state_id).destination);
     			action = new Move(strategy_actions.get(state_id).destination);
