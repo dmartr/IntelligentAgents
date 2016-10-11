@@ -27,10 +27,4 @@ public class ReactiveState {
 	public boolean isPickup() {
 		return pickup;
 	}
-
-	public boolean areNeighbors(City city) {
-		return origin.hasNeighbor(city);
-	}
-	
-
 }
