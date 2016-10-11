@@ -4,3 +4,9 @@
 	<agents>
 		<agent name="reactive-rla">
 			<vehicle name="Vehicle 1"/>
+		</agent>
+		<agent name="reactive-random">
+			<vehicle name="Vehicle 2"/>
+		</agent>
+		<agent name="reactive-lazy">
+			<vehicle name="Vehicle 3"/>

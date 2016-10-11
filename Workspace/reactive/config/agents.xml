@@ -9,5 +9,17 @@
 		<set class-name="template.ReactiveTemplate"/>
 		<set discount-factor="0.95"/>
 	</agent>
+	<agent name="reactive-random">
+		<set class-path="bin/"/>
+		<set class-name="template.RandomTemplate"/>
+		<set discount-factor="0.75"/>
+	</agent>
+	<agent name="reactive-lazy">
+		<set class-path="bin/"/>
+		<set class-name="template.LazyTemplate"/>
+		<set discount-factor="0.95"/>
+		<set max-distance="800.0"/>
+		
+	</agent>
 	
 </agents>
