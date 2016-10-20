@@ -7,7 +7,7 @@
 	<agent name="reactive-rla">
 		<set class-path="bin/"/>
 		<set class-name="template.ReactiveTemplate"/>
-		<set discount-factor="0.95"/>
+		<set discount-factor="0.99"/>
 	</agent>
 	<agent name="reactive-random">
 		<set class-path="bin/"/>
