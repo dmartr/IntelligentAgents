@@ -1,0 +1,66 @@
+package template;
+
+import logist.topology.Topology.City;
+
+import java.util.List;
+
+import logist.task.Task;
+
+/**
+ * State Class for the Deliberative Agent
+ * @author Ignacio Aguado, Darío Martínez
+ */
+public class DeliberativeState {
+	
+	public City currentCity;
+	public int capacity;
+	public double costPerKm;
+	public List<Task> toPickupList;
+	public List<Task> pickedupList;
+
+	/**
+	 * Initializer for a state
+	 * 
+	 * @param origin City where the agent is located without a task
+	 */
+	public DeliberativeState(City currentCity, int capacity, double costPerKm, List<Task> toPickupList, List<Task> pickedupList) {
+		this.currentCity = currentCity;
+		this.capacity = capacity;
+		this.costPerKm = costPerKm;
+		this.toPickupList = toPickupList;
+		this.pickedupList = pickedupList;
+	}
+	
+	public DeliberativeState move(City nextCity) {
+		DeliberativeState newState = new DeliberativeState(nextCity, capacity, costPerKm, toPickupList, pickedupList);
+		return newState;
+	}
+	
+	public DeliberativeState pickup(Task pickedup) {
+		int newCapacity = capacity - pickedup.weight;
+		List<Task> newToPickupList = toPickupList;
+		newToPickupList.remove(pickedup);
+		List<Task> newPickedupList = pickedupList;
+		newPickedupList.add(pickedup);
+		DeliberativeState newState = new DeliberativeState(currentCity, newCapacity, costPerKm, newToPickupList, newPickedupList);
+		return newState;
+	}
+	
+	public DeliberativeState deliver(Task delivered) {
+		int newCapacity = capacity + delivered.weight;
+		List<Task> newPickedupList = pickedupList;
+		newPickedupList.remove(delivered);
+		DeliberativeState newState = new DeliberativeState(currentCity, newCapacity, costPerKm, toPickupList, newPickedupList);
+		return newState;
+	}
+	
+	public boolean canPickup(Task toPickup) {
+		return capacity-toPickup.weight >= 0;
+	}
+	
+	public List<DeliberativeState> getNextStates() {
+		List<DeliberativeState> nextStates = new ArrayList<DeliberativeState>();
+		
+		
+	}
+}

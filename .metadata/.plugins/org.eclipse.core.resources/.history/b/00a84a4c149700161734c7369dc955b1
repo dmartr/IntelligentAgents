@@ -1,0 +1,48 @@
+package template;
+
+import logist.topology.Topology.City;
+import logist.task.Task;
+
+/**
+ * State Class for the Reactive Agent
+ * @author Ignacio Aguado, Darío Martínez
+ */
+public class DeliberativeState {
+	
+	public City origin;
+	public City destination;
+	public boolean pickup;
+	public String id;
+	
+	/**
+	 * Initializer for a state with no available tasks
+	 * 
+	 * @param origin City where the agent is located without a task
+	 */
+	public DeliberativeState(City currentCity, Double capacity, Double costPerKm, List<Task> tasksToPickUp, List<Task> tasksPickedUp) {
+		this.pickup = false;
+		this.origin = origin;
+		this.destination = null;
+		this.id = Integer.toString(origin.id) + "-*";
+	}
+	
+	/**
+	 * Initializer for a state with an available task
+	 * 
+	 * @param origin City where the agent has found a task
+	 * @param destination City where the task has to be delivered
+	 */
+	public ReactiveState(City origin, City destination) {
+		this.pickup = true;
+		this.origin = origin;
+		this.destination = destination;
+		this.id = Integer.toString(origin.id) + "-" + Integer.toString(destination.id);
+	}
+	
+	/**
+	 * @return True if the State has a task to a certain city
+	 */
+	public boolean isPickup() {
+		return pickup;
+	}
+}
