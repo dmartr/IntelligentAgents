@@ -73,6 +73,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 	private Plan bfsPlan(Vehicle vehicle, TaskSet tasks) {
 		City current = vehicle.getCurrentCity();
 		int capacity = vehicle.capacity();
+		int copyToDelete = vehicle.capacity();
 		int costPerKm = vehicle.costPerKm();
 		double benefits = 0.0;
 		double totalBenefits = 0.0;
@@ -80,14 +81,25 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		Plan plan = new Plan(current);
 		List<Task> toPickupList = new ArrayList(tasks);
 		List<DeliberativeAction> actionHistory = new ArrayList<DeliberativeAction>();
-		DeliberativeState initialState = new DeliberativeState(current, capacity, costPerKm, benefits, totalBenefits, toDeliverList, toPickupList, actionHistory);
+		DeliberativeState initialState = new DeliberativeState(current, capacity, costPerKm, benefits, totalBenefits, toPickupList, toDeliverList, actionHistory, null);
 		BreadthFirstSearch bfs = new BreadthFirstSearch();
-		
-		List<DeliberativeAction> actionPlanList = bfs.search(initialState, 3).actionHistory;
-		
+		System.out.println("MY CAPACITY IS " + capacity);
+		List<DeliberativeAction> actionPlanList = bfs.search(initialState).actionHistory;
 		for (DeliberativeAction action : actionPlanList) {
-			//System.out.println(action.id);
+			if (action.move) {
+				System.out.println(action.id);
+				plan.appendMove(action.nextCity);
+			} else if (action.pickup) {
+				copyToDelete = copyToDelete-action.pickedupTask.weight;
+				System.out.println("PICK UP in " + action.pickedupTask.pickupCity + " to " + action.pickedupTask.deliveryCity);
+				plan.appendPickup(action.pickedupTask);
+			} else {
+				System.out.println("DELIVERY in " + action.deliveredTask.deliveryCity);
+				copyToDelete = copyToDelete+action.deliveredTask.weight;
+				plan.appendDelivery(action.deliveredTask);
+			}
 		}
+		
 		return plan;
 	}
 	

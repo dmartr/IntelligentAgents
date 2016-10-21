@@ -1,0 +1,70 @@
+package template;
+
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+
+public class BreadthFirstSearch {
+	
+	private Queue<DeliberativeState> toVisit = new LinkedList<DeliberativeState>();
+	private List<DeliberativeState> visited = new ArrayList<DeliberativeState>();
+
+	private DeliberativeState goal;
+	
+	public DeliberativeState search(DeliberativeState initialState) {
+		toVisit.add(initialState);
+		
+		double bestBenefits = Double.NEGATIVE_INFINITY;
+		int lastLevel = 0;
+		double bestOfLevel = Double.NEGATIVE_INFINITY;
+		while (!toVisit.isEmpty()){
+			//System.out.println(toVisit.element());
+			DeliberativeState currentState = toVisit.poll();
+			System.out.println(currentState.toPickupList.size());
+			if (currentState.isGoal() && currentState.totalBenefits > bestBenefits) {
+				goal = currentState;
+				System.out.println("NEW GOOOOAL " + currentState.totalBenefits);
+				bestBenefits = currentState.totalBenefits;
+			} else {
+				if (goal == null || currentState.getLevelOfDepth() <= goal.getLevelOfDepth()) {
+					//System.out.print("SAME LEVEL");
+					if(currentState.getLevelOfDepth() == lastLevel) {
+						if (currentState.totalBenefits + currentState.getMaxRewards() >= bestOfLevel) {
+							bestOfLevel = currentState.totalBenefits + currentState.getMaxRewards();
+							List<DeliberativeState> nextStates = currentState.getNextStates();
+							visited.add(currentState);
+							for (DeliberativeState state : nextStates) {
+								if (!currentState.hasLoop()) {
+									//System.out.println("Next States " +  state.currentCity + " * " + toVisit.size() );
+									toVisit.add(state);
+									//System.out.println(toVisit.size());
+								}
+						
+							}
+						}
+					} else {
+						lastLevel++;
+						//System.out.println(lastLevel);
+						bestOfLevel = Double.NEGATIVE_INFINITY;
+						List<DeliberativeState> nextStates = currentState.getNextStates();
+						visited.add(currentState);
+						for (DeliberativeState state : nextStates) {
+							if (!currentState.hasLoop()) {
+								//System.out.println("Next States " +  state.currentCity + " * " + toVisit.size() );
+								toVisit.add(state);
+								//System.out.println(toVisit.size());
+							}
+					
+						}
+					}						
+				} else {
+					return goal;
+				}
+			}
+			
+		}
+		
+		return goal;
+	}
+}
