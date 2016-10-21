@@ -16,19 +16,19 @@ public class DeliberativeState {
 	
 	public City currentCity;
 	public int capacity;
-	public double costPerKm;
+	public int costPerKm;
 	public double benefits;
 	public double totalBenefits;
 	public List<Task> toPickupList;
 	public List<Task> toDeliverList;
-	public List<Action> actionHistory = new ArrayList<Action>();
+	public List<DeliberativeAction> actionHistory = new ArrayList<DeliberativeAction>();
 
 	/**
 	 * Initializer for a state
 	 * 
 	 * @param origin City where the agent is located without a task
 	 */
-	public DeliberativeState(City currentCity, int capacity, double costPerKm, double benefits, double totalBenefits, List<Task> toPickupList, List<Task> toDeliverList, List<Action> actionHistory) {
+	public DeliberativeState(City currentCity, int capacity, int costPerKm, double benefits, double totalBenefits, List<Task> toPickupList, List<Task> toDeliverList, List<DeliberativeAction> actionHistory) {
 		this.currentCity = currentCity;
 		this.capacity = capacity;
 		this.costPerKm = costPerKm;
@@ -43,8 +43,8 @@ public class DeliberativeState {
 	public DeliberativeState move(City nextCity) {
 		double newBenefits = -currentCity.distanceTo(nextCity)*costPerKm;
 		double newTotalBenefits = this.totalBenefits + newBenefits;
-		Action action = new Action.Move(nextCity);
-		List<Action> newActionHistory = actionHistory;
+		DeliberativeAction action = new DeliberativeAction(nextCity);
+		List<DeliberativeAction> newActionHistory = actionHistory;
 		newActionHistory.add(action);
 		DeliberativeState newState = new DeliberativeState(nextCity, capacity, costPerKm, newBenefits, newTotalBenefits, toPickupList, toDeliverList, newActionHistory);
 		return newState;
@@ -57,8 +57,8 @@ public class DeliberativeState {
 		newToPickupList.remove(pickedup);
 		List<Task> newToDeliverList = toDeliverList;
 		newToDeliverList.add(pickedup);
-		Action action = new Action.Pickup(pickedup);
-		List<Action> newActionHistory = actionHistory;
+		DeliberativeAction action = new DeliberativeAction("PICKUP", pickedup);
+		List<DeliberativeAction> newActionHistory = actionHistory;
 		newActionHistory.add(action);
 		DeliberativeState newState = new DeliberativeState(currentCity, newCapacity, costPerKm, newBenefits, totalBenefits, newToPickupList, newToDeliverList, newActionHistory);
 		return newState;
@@ -70,8 +70,8 @@ public class DeliberativeState {
 		double newTotalBenefits = this.totalBenefits + newBenefits;
 		List<Task> newToDeliverList = toDeliverList;
 		newToDeliverList.remove(delivered);
-		Action action = new Action.Delivery(delivered);
-		List<Action> newActionHistory = actionHistory;
+		DeliberativeAction action = new DeliberativeAction("DELIVERY", delivered);
+		List<DeliberativeAction> newActionHistory = actionHistory;
 		newActionHistory.add(action);
 		DeliberativeState newState = new DeliberativeState(currentCity, newCapacity, costPerKm, newBenefits, newTotalBenefits, toPickupList, newToDeliverList, newActionHistory);
 		return newState;

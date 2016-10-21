@@ -2,8 +2,13 @@ package template;
 
 /* import table */
 import logist.simulation.Vehicle;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import logist.agent.Agent;
 import logist.behavior.DeliberativeBehavior;
+import logist.plan.Action;
 import logist.plan.Plan;
 import logist.task.Task;
 import logist.task.TaskDistribution;
@@ -35,7 +40,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		this.topology = topology;
 		this.td = td;
 		this.agent = agent;
-		
+		this.algorithm = Algorithm.BFS;
 		// initialize the planner
 		int capacity = agent.vehicles().get(0).capacity();
 		String algorithmName = agent.readProperty("algorithm", String.class, "ASTAR");
@@ -58,11 +63,31 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 			break;
 		case BFS:
 			// ...
-			plan = naivePlan(vehicle, tasks);
+			plan = bfsPlan(vehicle, tasks);
 			break;
 		default:
 			throw new AssertionError("Should not happen.");
 		}		
+		return plan;
+	}
+	private Plan bfsPlan(Vehicle vehicle, TaskSet tasks) {
+		City current = vehicle.getCurrentCity();
+		int capacity = vehicle.capacity();
+		int costPerKm = vehicle.costPerKm();
+		double benefits = 0.0;
+		double totalBenefits = 0.0;
+		List<Task> toDeliverList = new ArrayList(vehicle.getCurrentTasks());
+		Plan plan = new Plan(current);
+		List<Task> toPickupList = new ArrayList(tasks);
+		List<DeliberativeAction> actionHistory = new ArrayList<DeliberativeAction>();
+		DeliberativeState initialState = new DeliberativeState(current, capacity, costPerKm, benefits, totalBenefits, toDeliverList, toPickupList, actionHistory);
+		BreadthFirstSearch bfs = new BreadthFirstSearch();
+		
+		List<DeliberativeAction> actionPlanList = bfs.search(initialState, 3).actionHistory;
+		
+		for (DeliberativeAction action : actionPlanList) {
+			//System.out.println(action.id);
+		}
 		return plan;
 	}
 	
