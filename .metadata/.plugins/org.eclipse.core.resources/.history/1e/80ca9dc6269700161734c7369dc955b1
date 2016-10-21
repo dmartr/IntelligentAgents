@@ -1,0 +1,10 @@
+package template;
+
+import java.util.Queue;
+
+public class BreadthFirstSearch {
+	
+	private Queue<DeliberativeState> toVisit = new LinkedList();
+	
+
+}

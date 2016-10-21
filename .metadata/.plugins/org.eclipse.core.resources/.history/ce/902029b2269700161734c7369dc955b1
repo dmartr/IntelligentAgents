@@ -1,0 +1,11 @@
+package template;
+
+public class BreadthFirstSearch {
+	
+	
+	
+	public BreadthFirstSearch() {
+		
+	}
+
+}
