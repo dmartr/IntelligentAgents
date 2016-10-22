@@ -126,7 +126,7 @@ public class DeliberativeState {
     public boolean knownState() {
         DeliberativeState stateB = parent;
         while (stateB != null) {
-            if (stateB.isEquivalentlTo(this)) {
+            if (stateB.isEqualTo(this)) {
                 return true;
             }
             stateB = stateB.parent;
@@ -150,7 +150,7 @@ public class DeliberativeState {
     	return false;
     }
     
-    public boolean isEquivalentlTo(DeliberativeState stateB) {
+    public boolean isEqualTo(DeliberativeState stateB) {
     	if (this.currentCity.equals(stateB.currentCity) && this.capacity == stateB.capacity) {
     		for (Task t : stateB.toPickupList) {
     			if (this.toPickupList.indexOf(t) < 0) {

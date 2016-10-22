@@ -13,6 +13,7 @@ public class BreadthFirstSearch {
 	
 	public DeliberativeState search(DeliberativeState initialState) {
 		toVisit.add(initialState);
+		
 		double bestBenefits = Double.NEGATIVE_INFINITY;
 
 		while (!toVisit.isEmpty()){

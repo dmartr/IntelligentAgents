@@ -13,6 +13,7 @@ public class BreadthFirstSearch {
 	
 	public DeliberativeState search(DeliberativeState initialState) {
 		toVisit.add(initialState);
+		
 		double bestBenefits = Double.NEGATIVE_INFINITY;
 
 		while (!toVisit.isEmpty()){
@@ -29,12 +30,13 @@ public class BreadthFirstSearch {
 						}
 					}
 				} else {
-					break;
+					return goal;
 				}
 			}
 			
 		}
-		System.out.println("BFS results: " + goal.actionHistory.size() + " actions with a total benefit of " + goal.totalBenefits);
+		System.out.println("BFS results: " + goal.actionHistory.size() + "steps with a total benefit of " + currentState.totalBenefits);
+
 		return goal;
 	}
 }

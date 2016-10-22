@@ -84,7 +84,6 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		DeliberativeState initialState = new DeliberativeState(current, capacity, costPerKm, benefits, totalBenefits, toPickupList, toDeliverList, actionHistory, null);
 		BreadthFirstSearch bfs = new BreadthFirstSearch();
 		List<DeliberativeAction> actionPlanList = bfs.search(initialState).actionHistory;
-		
 		for (DeliberativeAction action : actionPlanList) {
 			if (action.move) {
 				System.out.println(action.id);
@@ -92,6 +91,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 			} else if (action.pickup) {
 				copyToDelete = copyToDelete-action.pickedupTask.weight;
 				System.out.println("PICK UP in " + action.pickedupTask.pickupCity + " to " + action.pickedupTask.deliveryCity);
+				System.out.println(action.pickedupTask.reward)
 				plan.appendPickup(action.pickedupTask);
 			} else {
 				System.out.println("DELIVERY in " + action.deliveredTask.deliveryCity);

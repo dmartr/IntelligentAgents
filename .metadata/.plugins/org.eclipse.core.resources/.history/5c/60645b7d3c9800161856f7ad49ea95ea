@@ -83,8 +83,8 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		List<DeliberativeAction> actionHistory = new ArrayList<DeliberativeAction>();
 		DeliberativeState initialState = new DeliberativeState(current, capacity, costPerKm, benefits, totalBenefits, toPickupList, toDeliverList, actionHistory, null);
 		BreadthFirstSearch bfs = new BreadthFirstSearch();
+		System.out.println("MY CAPACITY IS " + capacity);
 		List<DeliberativeAction> actionPlanList = bfs.search(initialState).actionHistory;
-		
 		for (DeliberativeAction action : actionPlanList) {
 			if (action.move) {
 				System.out.println(action.id);

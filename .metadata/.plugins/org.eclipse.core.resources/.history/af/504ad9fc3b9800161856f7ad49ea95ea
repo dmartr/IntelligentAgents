@@ -150,7 +150,7 @@ public class DeliberativeState {
     	return false;
     }
     
-    public boolean isEquivalentlTo(DeliberativeState stateB) {
+    public boolean isEqualTo(DeliberativeState stateB) {
     	if (this.currentCity.equals(stateB.currentCity) && this.capacity == stateB.capacity) {
     		for (Task t : stateB.toPickupList) {
     			if (this.toPickupList.indexOf(t) < 0) {
