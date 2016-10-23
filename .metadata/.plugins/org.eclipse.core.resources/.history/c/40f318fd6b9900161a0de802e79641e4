@@ -1,0 +1,4 @@
+interface Heuristic {
+   public void eat();
+   public void travel();
+}

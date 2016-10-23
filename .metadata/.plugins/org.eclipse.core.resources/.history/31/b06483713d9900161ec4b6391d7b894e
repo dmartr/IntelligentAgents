@@ -1,0 +1,32 @@
+package template;
+
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.TreeMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+
+public class AStar {
+	
+	TreeMap<Double, DeliberativeState> toVisit = new TreeMap<Double, DeliberativeState>();
+
+	private Heuristic heuristic;
+	
+	public DeliberativeState search(DeliberativeState initialState) {
+		toVisit.put(0.0, initialState);
+
+		while (true){
+			TreeMap.Entry<Double, DeliberativeState> = toVisit.pollFirstEntry();
+			if (currentState.isGoal()) {
+				return currentState;
+			} else {
+				List<DeliberativeState> nextStates = currentState.getNextStates();
+				for (DeliberativeState state : nextStates) {
+					toVisit.add(state);
+				}
+			}
+		}
+			
+	}
+}

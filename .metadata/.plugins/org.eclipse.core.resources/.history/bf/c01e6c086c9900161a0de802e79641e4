@@ -1,0 +1,5 @@
+interface Heuristic {
+   public double getG();
+   public double getH();
+   public double getF();
+}

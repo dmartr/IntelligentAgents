@@ -1,0 +1,46 @@
+package template;
+
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.TreeMap;
+
+import logist.agent.Agent;
+import template.DeliberativeTemplate.Algorithm;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+
+public class AStar {
+	
+	TreeMap<Double, DeliberativeState> toVisit = new TreeMap<Double, DeliberativeState>();
+
+	private BenefitsHeuristic heuristic = new BenefitsHeuristic();
+	
+	enum Heuristic { BENEFITS, DISTANCE }
+	
+	
+	public DeliberativeState search(DeliberativeState initialState, Agent agent) {
+		Heuristic heuristicName =  agent.readProperty("heuristic", String.class, "BENEFITS");
+		heuristic = Heuristic.valueOf(heuristicName.toUpperCase());
+		toVisit.put(0.0, initialState);
+		int iterations = 0;
+		while (true){
+			iterations++;
+			DeliberativeState currentState = toVisit.pollFirstEntry().getValue();
+			if (currentState.isGoal()) {
+				System.out.println("A* results: " + iterations + " iterations, " + currentState.actionHistory.size() + " actions with a total benefit of " + currentState.totalBenefits);
+				return currentState;
+			} else {
+				if (!currentState.knownState()) {
+					List<DeliberativeState> nextStates = currentState.getNextStates();
+					for (DeliberativeState state : nextStates) {
+						double f = heuristic.getF(state);
+						toVisit.put(f, state);
+					}
+				}
+			}
+		}
+			
+	}
+}
