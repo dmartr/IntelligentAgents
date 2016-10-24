@@ -4,7 +4,7 @@ import logist.task.Task;
 import logist.topology.Topology.City;
 
 /**
- * Action Class for the Reactive Agent
+ * Action Class for the Actions
  * @author Ignacio Aguado, Darío Martínez
  */
 public class DeliberativeAction {
@@ -18,7 +18,8 @@ public class DeliberativeAction {
 	public String id;
 	
 	/**
-	 * Initializer for the Pickup action
+	 * Initializer for the Move action
+	 * @param destination City to move 
 	 */
 	public DeliberativeAction(City nextCity) {
 		this.pickup = false;
@@ -31,9 +32,10 @@ public class DeliberativeAction {
 	}
 	
 	/**
-	 * Initializer for a Move action
+	 * Initializer for a Pickup or Deliver action
 	 * 
-	 * @param destination City to move 
+	 * @param: type: Pickup or Delivery
+	 * @param: task to be picked up or delivered
 	 */
 	public DeliberativeAction(String type, Task task) {
 		if (type.equals("PICKUP")) {

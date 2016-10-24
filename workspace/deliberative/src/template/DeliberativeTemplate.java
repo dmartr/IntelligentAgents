@@ -1,6 +1,6 @@
 package template;
 
-/* import table */
+
 import logist.simulation.Vehicle;
 
 import java.util.ArrayList;
@@ -22,6 +22,11 @@ import logist.topology.Topology.City;
  * An optimal planner for one vehicle.
  */
 @SuppressWarnings("unused")
+
+/**
+ * Deliberative Agent
+ * @author Ignacio Aguado, Darío Martínez
+ */
 public class DeliberativeTemplate implements DeliberativeBehavior {
 
 	enum Algorithm { BFS, ASTAR }
@@ -46,7 +51,6 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		// initialize the planner
 		int capacity = agent.vehicles().get(0).capacity();
 		String algorithmName = agent.readProperty("algorithm", String.class, "ASTAR");
-		
 		// Throws IllegalArgumentException if algorithm is unknown
 		algorithm = Algorithm.valueOf(algorithmName.toUpperCase());
 		
@@ -72,6 +76,10 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		return plan;
 	}
 	
+	/**
+	 * A* Planning
+	 * @returns Best Plan found for the agent
+	 */
 	private Plan aStarPlan(Vehicle vehicle, TaskSet tasks) {
 		City current = vehicle.getCurrentCity();
 		int capacity = vehicle.capacity();
@@ -105,6 +113,11 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		
 		return plan;
 	}
+	
+	/**
+	 * BFS Planning
+	 * @returns Best Plan found for the agent
+	 */
 	private Plan bfsPlan(Vehicle vehicle, TaskSet tasks) {
 		City current = vehicle.getCurrentCity();
 		int capacity = vehicle.capacity();
@@ -122,6 +135,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		BFS bfs = new BFS();
 		List<DeliberativeAction> actionPlanList = bfs.search(initialState).actionHistory;
 		
+		// Once we have a list of actions we build a Plan
 		for (DeliberativeAction action : actionPlanList) {
 			if (action.move) {
 				System.out.println(action.id);
@@ -164,8 +178,12 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 	}
 
 	@Override
+	/**
+	 * Called when an Agent tries to pick up a task that no longer exists
+	 * Used only for the log
+	 */
 	public void planCancelled(TaskSet carriedTasks) {
-		
+		System.out.println("CHANGING MY PLAN");
 		if (!carriedTasks.isEmpty()) {
 			// This cannot happen for this simple agent, but typically
 			// you will need to consider the carriedTasks when the next
