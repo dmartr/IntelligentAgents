@@ -3,6 +3,7 @@ package template;
 import logist.topology.Topology.City;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import logist.plan.Action;
@@ -284,5 +285,76 @@ public class DeliberativeState {
     		distance = currentCity.distanceTo(parent.currentCity);
     	}
     	return distance;
+    }
+    
+    public double getMinimumFutureDistance() {
+    	double min_future_distance = Double.NEGATIVE_INFINITY;
+    	for (Task pickupTask : this.toPickupList) {
+    		double task_distance = currentCity.distanceTo(pickupTask.pickupCity) + pickupTask.pickupCity.distanceTo(pickupTask.deliveryCity);
+    		if (task_distance > min_future_distance) {
+    			min_future_distance = task_distance;
+    		}
+    	}
+    	for (Task deliveryTask : this.toDeliverList) {
+    		double task_distance = currentCity.distanceTo(deliveryTask.deliveryCity);
+    		if (task_distance > min_future_distance) {
+    			min_future_distance = task_distance;
+    		}    	
+    	}
+    	return min_future_distance;
+    }
+    
+    public double getBestFutureDistance() {
+    	List<Task> all_tasks = new ArrayList<Task>(toPickupList);
+    	all_tasks.addAll(toDeliverList);
+    	
+    	permute(all_tasks);
+    	while (permute_list.size() < factorial(all_tasks.size())) {
+    	}
+    	double best_distance = Double.POSITIVE_INFINITY;
+    	for (List<Task> l : permute_list) {
+    		double distance = 0;
+    		for (Task t : l) {
+    			if (t.pickupCity != null) {
+    				distance += this.currentCity.distanceTo(t.pickupCity) + t.pickupCity.distanceTo(t.deliveryCity);
+    			} else {
+    				distance += this.currentCity.distanceTo(t.deliveryCity);
+    			}
+    		}
+    		if (distance < best_distance) {
+    			best_distance = distance;
+    		}
+    	}
+    	return best_distance;
+    }
+
+    int factorial(int n) {
+        int result = 1;
+        for (int i = 1; i <= n; i++) {
+            result = result * i;
+        }
+        return result;
+    }
+    void permute(List<Task> arr) {
+        permute(arr, 0, arr.size() - 1);
+    }
+
+    List<List<Task>> permute_list = new ArrayList<List<Task>>();
+    void permute(List<Task> arr, int i, int n) {
+        int j;
+        if (i == n)
+        	permute_list.add(arr);
+        else {
+            for (j = i; j <= n; j++) {
+                swap(arr, i, j);
+                permute(arr, i + 1, n);
+                swap(arr, i, j); // backtrack
+            }
+        }
+    }
+    void swap(List<Task> arr, int x, int y) {
+        Task temp = arr.get(x);
+        arr.set(x, arr.get(y));
+        arr.set(y, temp);
     }
 }

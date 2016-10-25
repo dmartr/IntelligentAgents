@@ -6,19 +6,16 @@ package template;
  */
 public class DistanceHeuristic implements Heuristic {
 	
-	// g(s) = g(parent) + cost(s)
-	// cost(s) is the opposite of the Benefit function defined in the State: the smaller the number, the better (less costs, more benefits)
+	// g(s) = g(s_parent) + distance(s)
+	// The same as calculating the total distance driven by the vehicle
 	public double getG(DeliberativeState state) {
-		double g = state.benefits;
-		if (state.parent != null) {
-			g += getG(state.parent);
-		}
-		return -g;
+		return state.totalDistance;
+
 	}
 	
-	// h(s): distance driven from the previous state
+	// h(s): minimum distance necessary to drive to achieve all the pick ups and deliveries
 	public double getH(DeliberativeState state) {
-		return state.getDistance();
+		return state.getMinimumFutureDistance();
 	}
 	
 	// f(s) = g(s) + h(s)
