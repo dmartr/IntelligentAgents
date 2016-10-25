@@ -29,7 +29,6 @@ public class BFS {
 		while (!toVisit.isEmpty()){
 			iterations++;
 			DeliberativeState currentState = toVisit.poll();
-			System.out.println(currentState.getLevelOfDepth());
 
 			if (currentState.isGoal() && currentState.totalBenefits > bestBenefits) {
 				goal = currentState;
