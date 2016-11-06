@@ -57,7 +57,29 @@ public class SLS {
 		return initialPlan;
 		
 	}
+	public CentralizedPlan selectInitialSolutionRR() {
+		CentralizedPlan initialPlan = new CentralizedPlan(vehicles);
+		for (Vehicle v : vehicles) {
+			initialPlan.planTasks.put(v.id(), new LinkedList<CentralizedTask>());
+		}
+		int vehicle_id = 0;
+		for (Task task : tasks) {
+			if (vehicle_id == vehicles.size()) vehicle_id = 0;
+			CentralizedTask pickupTask = new CentralizedTask("PICKUP", task);
+			CentralizedTask deliveryTask = new CentralizedTask("DELIVERY", task);
+			
+			LinkedList<CentralizedTask> taskList = initialPlan.planTasks.get(vehicle_id);
+			taskList.addLast(pickupTask);
+			taskList.addLast(deliveryTask);
+			initialPlan.planTasks.put(vehicle_id, taskList);
+			vehicle_id++;
+		}
+		return initialPlan;
+		
+	}
+	
 	public ArrayList<CentralizedPlan> changeVehicle(CentralizedPlan plan, int initialVehicle) {
+
 		ArrayList<CentralizedPlan> neighbors = new ArrayList<CentralizedPlan>();
 		CentralizedTask movedPickupTask = plan.planTasks.get(initialVehicle).pollFirst();
 		CentralizedTask movedDeliveryTask = null;
@@ -68,7 +90,7 @@ public class SLS {
 				movedDeliveryTask = plan.planTasks.get(initialVehicle).remove(plan.planTasks.get(initialVehicle).indexOf(t));
 			}
 		}
-
+		
 		for (Integer vehicle : plan.planTasks.keySet()){
 
 			if (vehicle != initialVehicle) {
@@ -78,6 +100,7 @@ public class SLS {
 				tasksNeighbor.addFirst(movedPickupTask);
 				neighbor.planTasks.put(vehicle, tasksNeighbor);
 				if (neighbor.validConstraints()) {
+					//System.out.println(neighbor.planTasks.get(0).size() + " " + neighbor.planTasks.get(1).size() + " " + neighbor.planTasks.get(2).size() + " " + neighbor.planTasks.get(3).size());
 					neighbors.add(neighbor);
 				}
 			}
@@ -128,12 +151,11 @@ public class SLS {
 		int bestCost = oldPlan.planCost();
 		CentralizedPlan chosenPlan = oldPlan;
 		for (CentralizedPlan neighbor : neighbors) {
-			//System.out.println("Cost " + neighbor.planCost()  + " " + neighbor.planTasks.get(0).size() + " " +  neighbor.planTasks.get(1).size() + " " + neighbor.planTasks.get(2).size() + " "+ neighbor.planTasks.get(3).size() );
 
 			if (neighbor.planCost() < bestCost) {
 				chosenPlan = neighbor;
 				bestCost = neighbor.planCost();
-				System.out.println("WE HAVE NEW PLAN with cost " +  chosenPlan.planCost());
+				//System.out.println("WE HAVE NEW PLAN with cost " +  chosenPlan.planCost());
 				
 			}
 		}
@@ -141,7 +163,7 @@ public class SLS {
 		Random r = new Random();
 		int choice = r.nextInt(100);
 		
-		if (choice <= 35) {
+		if (choice <= 30) {
 			//System.out.println(chosenPlan.planTasks.get(0).size() + " " +  chosenPlan.planTasks.get(1).size() + " " + chosenPlan.planTasks.get(2).size() + " "+ chosenPlan.planTasks.get(3).size() );
 
 			return chosenPlan;

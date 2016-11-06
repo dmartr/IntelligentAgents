@@ -55,6 +55,22 @@ public class CentralizedPlan {
 		return tempCost;
 	}
 	
+	public int planDistance() {
+		int distance = 0;
+		for (Integer i : planTasks.keySet()) {
+			Vehicle vehicle = vehicles.get(i);
+			City currentCity = vehicle.getCurrentCity();
+			for (CentralizedTask task : planTasks.get(i)) {
+				if (task.pickup) {
+					distance += currentCity.distanceTo(task.pickupCity);
+				} else {
+					distance += currentCity.distanceTo(task.deliveryCity);
+				}
+			}	
+		}
+		return distance;
+	}
+	
 	public CentralizedTask nextTask(int vehicle) {
 		return planTasks.get(vehicle).getFirst();
 	}
@@ -115,6 +131,14 @@ public class CentralizedPlan {
     	    copy.put(entry.getKey(), new LinkedList<CentralizedTask>(entry.getValue()));
     	}
     	return copy;
+    }
+    public void paint() {
+    	for (Vehicle v : vehicles) {
+    		System.out.println("Vehicle " + v.id());
+    		for (CentralizedTask t: planTasks.get(v.id())) {
+    			System.out.println(t.task.id);
+    		}
+    	}
     }
 	
 	

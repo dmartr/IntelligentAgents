@@ -65,10 +65,9 @@ public class CentralizedTemplate implements CentralizedBehavior {
         long time_start = System.currentTimeMillis();
         SLS sls = new SLS(vehicles, new ArrayList(tasks));
         CentralizedPlan selectedPlan = sls.selectInitialSolution();
+        //selectedPlan.paint();
         int MAX_ITERS = 3000;
         for (int i = 0; i<MAX_ITERS; i++) {
-        	//System.out.println("***********");
-			//System.out.println("Initial plan" + selectedPlan.planTasks.get(0).size() + " " +  selectedPlan.planTasks.get(1).size() + " " + selectedPlan.planTasks.get(2).size() + " "+ selectedPlan.planTasks.get(3).size() );
         	ArrayList<CentralizedPlan> neighbors = sls.chooseNeighbors(selectedPlan);
         	if (neighbors != null) {
 	        	CentralizedPlan newPlan = sls.localChoice(selectedPlan, neighbors);
@@ -76,13 +75,14 @@ public class CentralizedTemplate implements CentralizedBehavior {
 	        	selectedPlan = newPlan;
         	}
         }
-		System.out.println("Final plan" + selectedPlan.planTasks.get(0).size() + " " +  selectedPlan.planTasks.get(1).size() + " " + selectedPlan.planTasks.get(2).size() + " "+ selectedPlan.planTasks.get(3).size() );
+        //selectedPlan.paint();
+        System.out.println("FINAL PLAN:");
+		System.out.println("	Task distribution: " + selectedPlan.planTasks.get(0).size() + " " +  selectedPlan.planTasks.get(1).size() + " " + selectedPlan.planTasks.get(2).size() + " "+ selectedPlan.planTasks.get(3).size() );
+		System.out.println("	Cost: " + selectedPlan.planCost());
+		System.out.println("	Distance: " + selectedPlan.planDistance());
 
-        System.out.println(selectedPlan.planCost());
         List<Plan> plans = new ArrayList<Plan>();
         for (Vehicle v : vehicles) {
-            //System.out.println(selectedPlan.planTasks.get(v.id()).size());
-
         	Plan vehiclePlan = centralizedPlan(v, selectedPlan.planTasks.get(v.id()));
     		plans.add(vehiclePlan);
         }
@@ -98,9 +98,8 @@ public class CentralizedTemplate implements CentralizedBehavior {
     private Plan centralizedPlan(Vehicle vehicle, LinkedList<CentralizedTask> tasks) {
         City current = vehicle.getCurrentCity();
         Plan plan = new Plan(current);
-        //System.out.println("VEHICLE ************ " + vehicle.id()) ;
+        int distance = 0;
         for (CentralizedTask task : tasks) {
-        	//System.out.println("+++++++++++++++ " + task.id);
         	if (task.pickup) {
             // move: current city => pickup location
 	            for (City city : current.pathTo(task.pickupCity)) {
@@ -119,12 +118,7 @@ public class CentralizedTemplate implements CentralizedBehavior {
 	            //System.out.println("Delivery " + task.task.deliveryCity.name);
                 plan.appendDelivery(task.task);
                 current = task.deliveryCity;
-        	}
-
-
-
-            // set current city
-            
+        	}            
         }
         return plan;
     }
