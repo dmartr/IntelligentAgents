@@ -2,6 +2,9 @@ package template;
 
 //the list of imports
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import logist.LogistSettings;
@@ -40,9 +43,10 @@ public class CentralizedTemplate implements CentralizedBehavior {
         // this code is used to get the timeouts
         LogistSettings ls = null;
         try {
-            ls = Parsers.parseSettings("config\\settings_default.xml");
+            ls = Parsers.parseSettings("config/settings_default.xml");
         }
         catch (Exception exc) {
+        	System.out.print(exc);
             System.out.println("There was a problem loading the configuration file.");
         }
         
@@ -59,15 +63,25 @@ public class CentralizedTemplate implements CentralizedBehavior {
     @Override
     public List<Plan> plan(List<Vehicle> vehicles, TaskSet tasks) {
         long time_start = System.currentTimeMillis();
-        
-//		System.out.println("Agent " + agent.id() + " has tasks " + tasks);
-        Plan planVehicle1 = naivePlan(vehicles.get(0), tasks);
-
-        List<Plan> plans = new ArrayList<Plan>();
-        plans.add(planVehicle1);
-        while (plans.size() < vehicles.size()) {
-            plans.add(Plan.EMPTY);
+        SLS sls = new SLS(vehicles, new ArrayList(tasks));
+        CentralizedPlan selectedPlan = sls.selectInitialSolution();
+        int MAX_ITERS = 3000;
+        for (int i = 0; i<MAX_ITERS; i++) {
+        	ArrayList<CentralizedPlan> neighbors = sls.chooseNeighbors(selectedPlan);
+        	if (neighbors != null) {
+	        	CentralizedPlan newPlan = sls.localChoice(selectedPlan, neighbors);
+	        	selectedPlan = newPlan;
+        	}
         }
+        System.out.println(selectedPlan.planCost());
+        List<Plan> plans = new ArrayList<Plan>();
+        for (Vehicle v : vehicles) {
+            //System.out.println(selectedPlan.planTasks.get(v.id()).size());
+
+        	Plan vehiclePlan = centralizedPlan(v, selectedPlan.planTasks.get(v.id()));
+    		plans.add(vehiclePlan);
+        }
+//		System.out.println("Agent " + agent.id() + " has tasks " + tasks);
         
         long time_end = System.currentTimeMillis();
         long duration = time_end - time_start;
@@ -76,27 +90,36 @@ public class CentralizedTemplate implements CentralizedBehavior {
         return plans;
     }
 
-    private Plan naivePlan(Vehicle vehicle, TaskSet tasks) {
+    private Plan centralizedPlan(Vehicle vehicle, LinkedList<CentralizedTask> tasks) {
         City current = vehicle.getCurrentCity();
         Plan plan = new Plan(current);
-
-        for (Task task : tasks) {
+        //System.out.println("VEHICLE ************ " + vehicle.id()) ;
+        for (CentralizedTask task : tasks) {
+        	//System.out.println("+++++++++++++++ " + task.id);
+        	if (task.pickup) {
             // move: current city => pickup location
-            for (City city : current.pathTo(task.pickupCity)) {
-                plan.appendMove(city);
-            }
+	            for (City city : current.pathTo(task.pickupCity)) {
+	            	//System.out.println("Move to " + city.name);
+	                plan.appendMove(city);
+	            }
+	            //System.out.println("Pick up in " + task.task.pickupCity.name);
+	            plan.appendPickup(task.task);
+	            current = task.pickupCity;
+        	} else {
+                // move: pickup location => delivery location
+                for (City city : current.pathTo(task.deliveryCity)) {
+	            	//System.out.println("Move to " + city.name);
+                    plan.appendMove(city);
+                }
+	            //System.out.println("Delivery " + task.task.deliveryCity.name);
+                plan.appendDelivery(task.task);
+                current = task.deliveryCity;
+        	}
 
-            plan.appendPickup(task);
 
-            // move: pickup location => delivery location
-            for (City city : task.path()) {
-                plan.appendMove(city);
-            }
-
-            plan.appendDelivery(task);
 
             // set current city
-            current = task.deliveryCity;
+            
         }
         return plan;
     }
