@@ -86,14 +86,13 @@ public class CentralizedPlan {
 					toPickup.add(Integer.toString(task.task.id));
 					weights += task.weight;
 					if (weights > vehicles.get(i).capacity()) {
-						System.out.println("Weights");
+						//System.out.println("Weights");
 						return false;
 					}
 				} else {
 
 					if (!toPickup.contains(Integer.toString(task.task.id))) {
-						System.out.println("Not pickup");
-
+						//System.out.println("Not pickup");
 						return false;
 					} else {
 						toPickup.remove(Integer.toString(task.task.id));
@@ -102,7 +101,7 @@ public class CentralizedPlan {
 				}
 			}
 			if (toPickup.size() > 0) {
-				System.out.println("Not empty");
+				//System.out.println("Not empty");
 
 				return false;
 			}

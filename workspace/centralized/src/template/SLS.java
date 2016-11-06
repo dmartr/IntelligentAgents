@@ -78,8 +78,6 @@ public class SLS {
 				tasksNeighbor.addFirst(movedPickupTask);
 				neighbor.planTasks.put(vehicle, tasksNeighbor);
 				if (neighbor.validConstraints()) {
-					if (neighbor.planTasks.get(0).size() < 56)
-					System.out.println(neighbor.planTasks.get(0).size() + " " +  neighbor.planTasks.get(1).size() + " " + neighbor.planTasks.get(2).size() + " "+ neighbor.planTasks.get(3).size() );
 					neighbors.add(neighbor);
 				}
 			}
@@ -91,70 +89,61 @@ public class SLS {
 	
 	public ArrayList<CentralizedPlan> changeOrder(CentralizedPlan plan, int selectedVehicle) {
 		ArrayList<CentralizedPlan> neighbors = new ArrayList<CentralizedPlan>();
-		CentralizedTask selectedTask = plan.planTasks.get(selectedVehicle).getFirst();
-		CentralizedPlan newPlan = new CentralizedPlan(plan);
-		LinkedList<CentralizedTask> taskList = newPlan.planTasks.get(selectedVehicle);
-		int firstIndex = taskList.indexOf(selectedTask);
-		CentralizedTask firstTask = taskList.remove(firstIndex);
-		
-		LinkedList<CentralizedTask> tasksCopy = new LinkedList<CentralizedTask>(newPlan.planTasks.get(selectedVehicle));
-		CentralizedTask secondTask = null;
-		for (CentralizedTask t : tasksCopy ) {
-			if (t.task.id == firstTask.task.id && !t.equals(firstTask)) {
-				int secondIndex = taskList.indexOf(t);
-				secondTask = taskList.remove(secondIndex);
-				break;
-			}
-		}
-		newPlan.planTasks.put(selectedVehicle, taskList);
-		for (int i= 0; i<taskList.size(); i++) {
-			for (int j = i+1; j<taskList.size(); j++) {
-				tasksCopy = new LinkedList<CentralizedTask>(newPlan.planTasks.get(selectedVehicle));
-				CentralizedPlan neighbor = new CentralizedPlan(newPlan);
-				tasksCopy.add(i, firstTask);
-				tasksCopy.add(j, secondTask);
-				neighbor.planTasks.put(selectedVehicle, tasksCopy);
+		LinkedList<CentralizedTask> taskList = plan.planTasks.get(selectedVehicle);
+		for (int i=0; i<taskList.size(); i++) {
+			for (int j= i+1; j<taskList.size();j++) {
+				CentralizedPlan neighbor = new CentralizedPlan(plan);
+				LinkedList<CentralizedTask> neighborTaskList = neighbor.planTasks.get(selectedVehicle);
+				CentralizedTask firstTask = taskList.get(i);
+				CentralizedTask secondTask = taskList.get(j);
+				neighborTaskList.add(i, secondTask);
+				neighborTaskList.remove(i+1);
+				neighborTaskList.add(j, firstTask);
+				neighborTaskList.remove(j+1);
+				neighbor.planTasks.put(selectedVehicle, neighborTaskList);
 				if (neighbor.validConstraints()) {
 					neighbors.add(neighbor);
 				}
 			}
 		}
-		return neighbors;	
+		return neighbors;
+		
+
 	}
-	
+
 	public ArrayList<CentralizedPlan> chooseNeighbors(CentralizedPlan plan) {
 		Random r = new Random();
 		int randomVehicle = r.nextInt(vehicles.size());
-		//System.out.println(randomVehicle);
 		ArrayList<CentralizedPlan> neighbors = new ArrayList<CentralizedPlan>();
-		if (plan.planTasks.get(randomVehicle).size() > 0) {
+		if (plan.planTasks.get(randomVehicle).size() > 1) {
 			neighbors.addAll(changeVehicle(new CentralizedPlan(plan), randomVehicle));
-			//neighbors.addAll(changeOrder(new CentralizedPlan(plan), randomVehicle));
+			neighbors.addAll(changeOrder(new CentralizedPlan(plan), randomVehicle));
 			return neighbors;
 		} else {
 			return null;
 		}	
 	}
-	
-	public CentralizedPlan localChoice(CentralizedPlan oldPlan, ArrayList<CentralizedPlan> neighbors) {
 
+	public CentralizedPlan localChoice(CentralizedPlan oldPlan, ArrayList<CentralizedPlan> neighbors) {
 		int bestCost = oldPlan.planCost();
 		CentralizedPlan chosenPlan = oldPlan;
 		for (CentralizedPlan neighbor : neighbors) {
-        	System.out.println(neighbor.planTasks.get(0).size());
+			//System.out.println("Cost " + neighbor.planCost()  + " " + neighbor.planTasks.get(0).size() + " " +  neighbor.planTasks.get(1).size() + " " + neighbor.planTasks.get(2).size() + " "+ neighbor.planTasks.get(3).size() );
 
-			if (neighbor.cost < bestCost) {
-				System.out.println("MEJOR");
-				System.out.println(neighbor.cost + " - " + bestCost);
+			if (neighbor.planCost() < bestCost) {
 				chosenPlan = neighbor;
-				bestCost = neighbor.cost;
+				bestCost = neighbor.planCost();
+				System.out.println("WE HAVE NEW PLAN with cost " +  chosenPlan.planCost());
+				
 			}
 		}
-		
+
 		Random r = new Random();
 		int choice = r.nextInt(100);
 		
 		if (choice <= 35) {
+			//System.out.println(chosenPlan.planTasks.get(0).size() + " " +  chosenPlan.planTasks.get(1).size() + " " + chosenPlan.planTasks.get(2).size() + " "+ chosenPlan.planTasks.get(3).size() );
+
 			return chosenPlan;
 		} else {
 			return oldPlan;
