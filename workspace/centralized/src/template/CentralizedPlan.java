@@ -46,7 +46,7 @@ public class CentralizedPlan {
 					tempCost += cost;
 				} else {
 					double distance = currentCity.distanceTo(task.deliveryCity);
-					int cost = (int) (distance*vehicle.costPerKm() - task.reward);
+					int cost = (int) (distance*vehicle.costPerKm());
 					currentCity = task.deliveryCity;
 					tempCost += cost;
 				}
@@ -139,6 +139,13 @@ public class CentralizedPlan {
     			System.out.println(t.task.id);
     		}
     	}
+    }
+    public String toString() {
+    	String distribution = "";
+    	for (Vehicle v : vehicles) {
+    		distribution += planTasks.get(v.id()).size() + " ";
+    	}
+    	return distribution;
     }
 	
 	

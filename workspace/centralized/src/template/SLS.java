@@ -57,6 +57,7 @@ public class SLS {
 		return initialPlan;
 		
 	}
+	
 	public CentralizedPlan selectInitialSolutionRR() {
 		CentralizedPlan initialPlan = new CentralizedPlan(vehicles);
 		for (Vehicle v : vehicles) {
@@ -78,27 +79,59 @@ public class SLS {
 		
 	}
 	
-	public ArrayList<CentralizedPlan> changeVehicle(CentralizedPlan plan, int initialVehicle) {
+	public CentralizedPlan selectInitialSolutionDistance() {
+		CentralizedPlan initialPlan = new CentralizedPlan(vehicles);
+		for (Vehicle v : vehicles) {
+			initialPlan.planTasks.put(v.id(), new LinkedList<CentralizedTask>());
+		}
+
+		for (Task task : tasks) {
+
+			CentralizedTask pickupTask = new CentralizedTask("PICKUP", task);
+			CentralizedTask deliveryTask = new CentralizedTask("DELIVERY", task);
+			int vehicle_id = -1;
+			double min_distance = Double.POSITIVE_INFINITY;
+			for (Vehicle v : vehicles) {
+				double distance = v.getCurrentCity().distanceTo(task.pickupCity);
+				if (distance < min_distance) {
+					min_distance = distance;
+					vehicle_id = v.id();
+				}
+			}
+			
+			LinkedList<CentralizedTask> taskList = initialPlan.planTasks.get(vehicle_id);
+			taskList.addLast(pickupTask);
+			taskList.addLast(deliveryTask);
+			initialPlan.planTasks.put(vehicle_id, taskList);
+
+		}
+		return initialPlan;
+		
+	}
+	
+	public ArrayList<CentralizedPlan> changeVehicle(CentralizedPlan plan, int selectedVehicle) {
 
 		ArrayList<CentralizedPlan> neighbors = new ArrayList<CentralizedPlan>();
-		CentralizedTask movedPickupTask = plan.planTasks.get(initialVehicle).pollFirst();
-		CentralizedTask movedDeliveryTask = null;
-		LinkedList<CentralizedTask> tasksCopy = new LinkedList<CentralizedTask>(plan.planTasks.get(initialVehicle));
+		CentralizedTask firstTaskV1 = plan.planTasks.get(selectedVehicle).pollFirst();
+		CentralizedTask secondTaskV1 = null;
+		LinkedList<CentralizedTask> tasksCopy = new LinkedList<CentralizedTask>(plan.planTasks.get(selectedVehicle));
 
 		for (CentralizedTask t : tasksCopy ) {
-			if (t.task.id == movedPickupTask.task.id) {
-				movedDeliveryTask = plan.planTasks.get(initialVehicle).remove(plan.planTasks.get(initialVehicle).indexOf(t));
+			if (t.task.id == firstTaskV1.task.id) {
+				secondTaskV1 = plan.planTasks.get(selectedVehicle).remove(plan.planTasks.get(selectedVehicle).indexOf(t));
 			}
 		}
 		
 		for (Integer vehicle : plan.planTasks.keySet()){
 
-			if (vehicle != initialVehicle) {
+			if (vehicle != selectedVehicle) {
 				CentralizedPlan neighbor = new CentralizedPlan(plan);
-				LinkedList<CentralizedTask> tasksNeighbor = neighbor.planTasks.get(vehicle);
-				tasksNeighbor.addFirst(movedDeliveryTask);
-				tasksNeighbor.addFirst(movedPickupTask);
-				neighbor.planTasks.put(vehicle, tasksNeighbor);
+				
+				LinkedList<CentralizedTask> tasksNeighborV1 = neighbor.planTasks.get(vehicle);
+				tasksNeighborV1.addFirst(secondTaskV1);
+				tasksNeighborV1.addFirst(firstTaskV1);
+				neighbor.planTasks.put(vehicle, tasksNeighborV1);
+
 				if (neighbor.validConstraints()) {
 					//System.out.println(neighbor.planTasks.get(0).size() + " " + neighbor.planTasks.get(1).size() + " " + neighbor.planTasks.get(2).size() + " " + neighbor.planTasks.get(3).size());
 					neighbors.add(neighbor);

@@ -1,0 +1,17 @@
+Round Robin:
+FINAL PLAN:
+	Task distribution: 16 18 12 14
+	Cost: 36354
+	Distance: 17496
+
+Biggest:
+FINAL PLAN:
+	Task distribution: 60 0 0 0
+	Cost: 36474
+	Distance: 15713
+
+Distance: 
+FINAL PLAN:
+	Task distribution: 24 14 8 14
+	Cost: 23570
+	Distance: 11418

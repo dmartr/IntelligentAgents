@@ -64,7 +64,7 @@ public class CentralizedTemplate implements CentralizedBehavior {
     public List<Plan> plan(List<Vehicle> vehicles, TaskSet tasks) {
         long time_start = System.currentTimeMillis();
         SLS sls = new SLS(vehicles, new ArrayList(tasks));
-        CentralizedPlan selectedPlan = sls.selectInitialSolution();
+        CentralizedPlan selectedPlan = sls.selectInitialSolutionDistance();
         //selectedPlan.paint();
         int MAX_ITERS = 3000;
         for (int i = 0; i<MAX_ITERS; i++) {
@@ -75,11 +75,11 @@ public class CentralizedTemplate implements CentralizedBehavior {
 	        	selectedPlan = newPlan;
         	}
         }
-        //selectedPlan.paint();
         System.out.println("FINAL PLAN:");
 		System.out.println("	Task distribution: " + selectedPlan.planTasks.get(0).size() + " " +  selectedPlan.planTasks.get(1).size() + " " + selectedPlan.planTasks.get(2).size() + " "+ selectedPlan.planTasks.get(3).size() );
 		System.out.println("	Cost: " + selectedPlan.planCost());
 		System.out.println("	Distance: " + selectedPlan.planDistance());
+        //selectedPlan.paint();
 
         List<Plan> plans = new ArrayList<Plan>();
         for (Vehicle v : vehicles) {
