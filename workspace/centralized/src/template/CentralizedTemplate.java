@@ -64,19 +64,20 @@ public class CentralizedTemplate implements CentralizedBehavior {
     public List<Plan> plan(List<Vehicle> vehicles, TaskSet tasks) {
         long time_start = System.currentTimeMillis();
         SLS sls = new SLS(vehicles, new ArrayList(tasks));
-        CentralizedPlan selectedPlan = sls.selectInitialSolutionDistance();
+        CentralizedPlan selectedPlan = sls.selectInitialSolutionRR();
+        System.out.println("INITIAL PLAN:");
+		System.out.println("	Task distribution: " + selectedPlan.toString());
         //selectedPlan.paint();
-        int MAX_ITERS = 3000;
+        int MAX_ITERS = 5000;
         for (int i = 0; i<MAX_ITERS; i++) {
         	ArrayList<CentralizedPlan> neighbors = sls.chooseNeighbors(selectedPlan);
         	if (neighbors != null) {
 	        	CentralizedPlan newPlan = sls.localChoice(selectedPlan, neighbors);
-				//System.out.println("Selected plan" + newPlan.planTasks.get(0).size() + " " +  newPlan.planTasks.get(1).size() + " " + newPlan.planTasks.get(2).size() + " "+ newPlan.planTasks.get(3).size() );
 	        	selectedPlan = newPlan;
         	}
         }
         System.out.println("FINAL PLAN:");
-		System.out.println("	Task distribution: " + selectedPlan.planTasks.get(0).size() + " " +  selectedPlan.planTasks.get(1).size() + " " + selectedPlan.planTasks.get(2).size() + " "+ selectedPlan.planTasks.get(3).size() );
+		System.out.println("	Task distribution: " + selectedPlan.toString());
 		System.out.println("	Cost: " + selectedPlan.planCost());
 		System.out.println("	Distance: " + selectedPlan.planDistance());
         //selectedPlan.paint();

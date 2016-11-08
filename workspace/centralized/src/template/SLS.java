@@ -111,30 +111,33 @@ public class SLS {
 	
 	public ArrayList<CentralizedPlan> changeVehicle(CentralizedPlan plan, int selectedVehicle) {
 
+		Random r = new Random();
 		ArrayList<CentralizedPlan> neighbors = new ArrayList<CentralizedPlan>();
-		CentralizedTask firstTaskV1 = plan.planTasks.get(selectedVehicle).pollFirst();
-		CentralizedTask secondTaskV1 = null;
-		LinkedList<CentralizedTask> tasksCopy = new LinkedList<CentralizedTask>(plan.planTasks.get(selectedVehicle));
-
-		for (CentralizedTask t : tasksCopy ) {
-			if (t.task.id == firstTaskV1.task.id) {
-				secondTaskV1 = plan.planTasks.get(selectedVehicle).remove(plan.planTasks.get(selectedVehicle).indexOf(t));
-			}
-		}
+		if (plan.planTasks.get(selectedVehicle).size() > 0) {
+			int randomIndex = r.nextInt( plan.planTasks.get(selectedVehicle).size());
 		
-		for (Integer vehicle : plan.planTasks.keySet()){
 
-			if (vehicle != selectedVehicle) {
-				CentralizedPlan neighbor = new CentralizedPlan(plan);
-				
-				LinkedList<CentralizedTask> tasksNeighborV1 = neighbor.planTasks.get(vehicle);
-				tasksNeighborV1.addFirst(secondTaskV1);
-				tasksNeighborV1.addFirst(firstTaskV1);
-				neighbor.planTasks.put(vehicle, tasksNeighborV1);
-
-				if (neighbor.validConstraints()) {
-					//System.out.println(neighbor.planTasks.get(0).size() + " " + neighbor.planTasks.get(1).size() + " " + neighbor.planTasks.get(2).size() + " " + neighbor.planTasks.get(3).size());
-					neighbors.add(neighbor);
+			CentralizedTask firstTaskV1 = plan.planTasks.get(selectedVehicle).remove(randomIndex);
+			CentralizedTask secondTaskV1 = null;
+			LinkedList<CentralizedTask> tasksCopy = new LinkedList<CentralizedTask>(plan.planTasks.get(selectedVehicle));
+	
+			for (CentralizedTask t : tasksCopy ) {
+				if (t.task.id == firstTaskV1.task.id) {
+					secondTaskV1 = plan.planTasks.get(selectedVehicle).remove(plan.planTasks.get(selectedVehicle).indexOf(t));
+				}
+			}
+			
+			for (Integer vehicle : plan.planTasks.keySet()){
+	
+				if (vehicle != selectedVehicle) {
+					CentralizedPlan neighbor = new CentralizedPlan(plan);
+					LinkedList<CentralizedTask> tasksNeighborV1 = neighbor.planTasks.get(vehicle);
+					tasksNeighborV1.addFirst(secondTaskV1);
+					tasksNeighborV1.addFirst(firstTaskV1);
+					neighbor.planTasks.put(vehicle, tasksNeighborV1);
+					if (neighbor.validConstraints()) {
+						neighbors.add(neighbor);
+					}
 				}
 			}
 		}
@@ -142,7 +145,7 @@ public class SLS {
 		return neighbors;
 
 	}
-	
+
 	public ArrayList<CentralizedPlan> changeOrder(CentralizedPlan plan, int selectedVehicle) {
 		ArrayList<CentralizedPlan> neighbors = new ArrayList<CentralizedPlan>();
 		LinkedList<CentralizedTask> taskList = plan.planTasks.get(selectedVehicle);
@@ -162,6 +165,7 @@ public class SLS {
 				}
 			}
 		}
+
 		return neighbors;
 		
 
@@ -181,24 +185,28 @@ public class SLS {
 	}
 
 	public CentralizedPlan localChoice(CentralizedPlan oldPlan, ArrayList<CentralizedPlan> neighbors) {
-		int bestCost = oldPlan.planCost();
+		double bestCost = oldPlan.planCost();
 		CentralizedPlan chosenPlan = oldPlan;
 		for (CentralizedPlan neighbor : neighbors) {
-
-			if (neighbor.planCost() < bestCost) {
+			double newCost = neighbor.planCost();
+			if (newCost < bestCost) {
 				chosenPlan = neighbor;
-				bestCost = neighbor.planCost();
-				//System.out.println("WE HAVE NEW PLAN with cost " +  chosenPlan.planCost());
-				
+				bestCost = newCost;
+				System.out.println("WE HAVE NEW PLAN with cost " +  bestCost);
+			} else if (newCost == bestCost) {
+				Random r = new Random();
+				int choice = r.nextInt(100);
+				if (choice <= 30) {
+					chosenPlan = neighbor;
+					//System.out.println("DRAW. WE HAVE NEW PLAN with cost " +  bestCost);
+				}
 			}
 		}
 
 		Random r = new Random();
 		int choice = r.nextInt(100);
 		
-		if (choice <= 30) {
-			//System.out.println(chosenPlan.planTasks.get(0).size() + " " +  chosenPlan.planTasks.get(1).size() + " " + chosenPlan.planTasks.get(2).size() + " "+ chosenPlan.planTasks.get(3).size() );
-
+		if (choice <= 35) {
 			return chosenPlan;
 		} else {
 			return oldPlan;

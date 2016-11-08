@@ -18,35 +18,30 @@ public class CentralizedPlan {
 	public CentralizedPlan(List<Vehicle> vehicles) {
 		this.planTasks = new HashMap<Integer, LinkedList<CentralizedTask>>();
 		this.vehicles = vehicles;
-		this.cost = planCost();
-
 	}
 	public CentralizedPlan(HashMap<Integer, LinkedList<CentralizedTask>> planTasks, List<Vehicle> vehicles) {
 		this.planTasks = planTasks;
 		this.vehicles = vehicles;
-		this.cost = planCost();
-
 	}
 	public CentralizedPlan(CentralizedPlan plan) {
 		this.planTasks = cloneHashmap(plan.planTasks);
 		this.vehicles = plan.vehicles;
-		this.cost = planCost();
 	}
 	
-	public int planCost() {
-		int tempCost = 0;
+	public double planCost() {
+		double tempCost = 0;
 		for (Integer i : planTasks.keySet()) {
 			Vehicle vehicle = vehicles.get(i);
 			City currentCity = vehicle.getCurrentCity();
 			for (CentralizedTask task : planTasks.get(i)) {
 				if (task.pickup) {
 					double distance = currentCity.distanceTo(task.pickupCity);
-					int cost = (int) (distance*vehicle.costPerKm());
+					double cost = distance*vehicle.costPerKm();
 					currentCity = task.pickupCity;
 					tempCost += cost;
 				} else {
 					double distance = currentCity.distanceTo(task.deliveryCity);
-					int cost = (int) (distance*vehicle.costPerKm());
+					double cost = distance*vehicle.costPerKm();
 					currentCity = task.deliveryCity;
 					tempCost += cost;
 				}
@@ -63,32 +58,14 @@ public class CentralizedPlan {
 			for (CentralizedTask task : planTasks.get(i)) {
 				if (task.pickup) {
 					distance += currentCity.distanceTo(task.pickupCity);
+					currentCity = task.pickupCity;
 				} else {
 					distance += currentCity.distanceTo(task.deliveryCity);
+					currentCity = task.deliveryCity;
 				}
 			}	
 		}
 		return distance;
-	}
-	
-	public CentralizedTask nextTask(int vehicle) {
-		return planTasks.get(vehicle).getFirst();
-	}
-	
-	public CentralizedTask nextTask(CentralizedTask task) {
-		for (Integer i : planTasks.keySet()) {
-			for (CentralizedTask t : planTasks.get(i)) {
-				if (t.equals(task)) {
-					int index = planTasks.get(i).indexOf(t);
-					if (planTasks.get(i).size() <= index+1) {
-						return null;
-					} else {
-						return planTasks.get(i).get(index+1);
-					}
-				}
-			}
-		}
-		return null;
 	}
 	
 	public boolean validConstraints() {
@@ -147,6 +124,14 @@ public class CentralizedPlan {
     	}
     	return distribution;
     }
-	
+	public int getVehicles() {
+		int nVehicles = 0;
+    	for (Vehicle v : vehicles) {
+    		if (planTasks.get(v.id()).size() > 0) {
+    			nVehicles++;
+    		}
+    	}
+    	return nVehicles;
+	}
 	
 }
