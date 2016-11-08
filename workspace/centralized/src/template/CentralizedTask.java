@@ -4,7 +4,7 @@ import logist.task.Task;
 import logist.topology.Topology.City;
 
 /**
- * Action Class for the Actions
+ * Task Class for the Centralized Behaviour
  * @author Ignacio Aguado, Darío Martínez
  */
 public class CentralizedTask {
@@ -19,7 +19,7 @@ public class CentralizedTask {
 	public String id;
 	
 	/**
-	 * Initializer for a Pickup or Deliver action
+	 * Initializer for a Pickup or Deliver task
 	 * 
 	 * @param: type: Pickup or Delivery
 	 * @param: task to be picked up or delivered

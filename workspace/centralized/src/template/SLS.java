@@ -22,16 +22,33 @@ import logist.task.TaskDistribution;
 import logist.task.TaskSet;
 import logist.topology.Topology;
 import logist.topology.Topology.City;
+
+
+/**
+ * Stochastic Local Search Class
+ * @author Ignacio Aguado, Darío Martínez
+ */
 public class SLS {
 	
 	public List<Vehicle> vehicles = new ArrayList<Vehicle>();
 	public List<Task> tasks = new ArrayList<Task>();
 
+	/**
+	 * Initializer for a Pickup or Deliver action
+	 * 
+	 * @param: vehicles: List of vehicles 
+	 * @param: tasks: List of tasks
+	 */
 	public SLS(List<Vehicle> vehicles, List<Task> tasks) {
 		this.vehicles = vehicles;
 		this.tasks = tasks;
 	}
 	
+	/**
+	 * Select the initial solution by giving all the tasks sequentally to the biggest vehicle
+	 * 
+	 * @returns Initial plan
+	 */
 	public CentralizedPlan selectInitialSolution() {
 		CentralizedPlan initialPlan = new CentralizedPlan(vehicles);
 		
@@ -58,6 +75,11 @@ public class SLS {
 		
 	}
 	
+	/**
+	 * Select the initial solution by assigning all the tasks by Round Robin
+	 * 
+	 * @returns Initial plan
+	 */
 	public CentralizedPlan selectInitialSolutionRR() {
 		CentralizedPlan initialPlan = new CentralizedPlan(vehicles);
 		for (Vehicle v : vehicles) {
@@ -79,6 +101,11 @@ public class SLS {
 		
 	}
 	
+	/**
+	 * Select the initial solution by assigning each task to the vehicle which is closer to it in its initial position
+	 * 
+	 * @returns Initial plan
+	 */
 	public CentralizedPlan selectInitialSolutionDistance() {
 		CentralizedPlan initialPlan = new CentralizedPlan(vehicles);
 		for (Vehicle v : vehicles) {
@@ -109,6 +136,14 @@ public class SLS {
 		
 	}
 	
+	/**
+	 * Change the first task (Pickup and delivery) from vehicle1 to another vehicle
+	 * 
+	 * @param Initial plan
+	 * @param Vehicle 1 id
+	 * 
+	 * @returns List of neighbors found
+	 */
 	public ArrayList<CentralizedPlan> changeVehicle(CentralizedPlan plan, int selectedVehicle) {
 
 		Random r = new Random();
@@ -143,6 +178,14 @@ public class SLS {
 
 	}
 
+	/**
+	 * Find all the possible task permutations for vehicle1
+	 * 
+	 * @param Initial plan
+	 * @param Vehicle 1 id
+	 * 
+	 * @returns List of neighbors found
+	 */
 	public ArrayList<CentralizedPlan> changeOrder(CentralizedPlan plan, int selectedVehicle) {
 		ArrayList<CentralizedPlan> neighbors = new ArrayList<CentralizedPlan>();
 		LinkedList<CentralizedTask> taskList = plan.planTasks.get(selectedVehicle);
@@ -167,7 +210,14 @@ public class SLS {
 		
 
 	}
-
+	
+	/**
+	 * Find all the possible neighbors by changing vehicle and order
+	 * 
+	 * @param Initial plan
+	 * 
+	 * @returns List of neighbors found
+	 */
 	public ArrayList<CentralizedPlan> chooseNeighbors(CentralizedPlan plan) {
 		Random r = new Random();
 		int randomVehicle = r.nextInt(vehicles.size());
@@ -181,6 +231,15 @@ public class SLS {
 		}	
 	}
 
+	/**
+	 * From a list of neighbors, find the best one in terms of cost
+	 * Return the new neighbor with a certain probability or just return the old one
+	 * 
+	 * @param Initial plan
+	 * @param List of neighbors
+	 * 
+	 * @returns Selected plan
+	 */
 	public CentralizedPlan localChoice(CentralizedPlan oldPlan, ArrayList<CentralizedPlan> neighbors) {
 		double bestCost = oldPlan.planCost();
 		CentralizedPlan chosenPlan = oldPlan;
@@ -189,17 +248,17 @@ public class SLS {
 			if (newCost < bestCost) {
 				chosenPlan = neighbor;
 				bestCost = newCost;
-				System.out.println("WE HAVE NEW PLAN with cost " +  bestCost);
 			} else if (newCost == bestCost) {
+				// If the cost is the same as the best one previously found, take it with a probability p
 				Random r = new Random();
 				int choice = r.nextInt(100);
 				if (choice <= 30) {
 					chosenPlan = neighbor;
-					//System.out.println("DRAW. WE HAVE NEW PLAN with cost " +  bestCost);
 				}
 			}
 		}
 
+		// Return the new plan found with a probability of 0.3-0.5 
 		Random r = new Random();
 		int choice = r.nextInt(100);
 		

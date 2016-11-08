@@ -10,24 +10,51 @@ import java.util.Map.Entry;
 import logist.simulation.Vehicle;
 import logist.topology.Topology.City;
 
+/**
+ * Stochastic Plan for the Centralized Behaviour
+ * @author Ignacio Aguado, Darío Martínez
+ */
 public class CentralizedPlan {
 	public HashMap<Integer, LinkedList<CentralizedTask>> planTasks;
 	public int cost;
 	public List<Vehicle> vehicles;
 	
+	/**
+	 * Initializer for an empty new Plan
+	 * 
+	 * @param: vehicles: List of vehicles
+	 */
 	public CentralizedPlan(List<Vehicle> vehicles) {
 		this.planTasks = new HashMap<Integer, LinkedList<CentralizedTask>>();
 		this.vehicles = vehicles;
 	}
+	
+	/**
+	 * Initializer for Plan from a list of tasks and vehicles
+	 * 
+	 * @param: vehicles: List of vehicles
+	 * @ param planTasks: Sorted list of tasks
+	 */
 	public CentralizedPlan(HashMap<Integer, LinkedList<CentralizedTask>> planTasks, List<Vehicle> vehicles) {
 		this.planTasks = planTasks;
 		this.vehicles = vehicles;
 	}
+	
+	/**
+	 * Initializer for a plan from another plan
+	 * 
+	 * @param: vehicles: List of vehicles
+	 */
 	public CentralizedPlan(CentralizedPlan plan) {
 		this.planTasks = cloneHashmap(plan.planTasks);
 		this.vehicles = plan.vehicles;
 	}
 	
+	/**
+	 * Calculate the cost of a plan
+	 * 
+	 * @return: final cost
+	 */
 	public double planCost() {
 		double tempCost = 0;
 		for (Integer i : planTasks.keySet()) {
@@ -50,6 +77,11 @@ public class CentralizedPlan {
 		return tempCost;
 	}
 	
+	/**
+	 * Calculate the distance driven of a plan
+	 * 
+	 * @return: final distance
+	 */
 	public int planDistance() {
 		int distance = 0;
 		for (Integer i : planTasks.keySet()) {
@@ -68,6 +100,11 @@ public class CentralizedPlan {
 		return distance;
 	}
 	
+	/**
+	 * Check if the Plan follows the constraints of the problem
+	 * 
+	 * @return: boolean 
+	 */
 	public boolean validConstraints() {
 		for (Integer i : planTasks.keySet()) {
 			int weights = 0;
@@ -95,13 +132,18 @@ public class CentralizedPlan {
 			}
 			if (toPickup.size() > 0) {
 				//System.out.println("Not empty");
-
 				return false;
 			}
 		}
 		return true;
 
 	}
+	
+	/**
+	 * Clone a HashMap from another plan (NOT a shallow copy)
+	 * 
+	 * @return: new hashmap
+	 */
     public HashMap<Integer, LinkedList<CentralizedTask>> cloneHashmap(HashMap<Integer, LinkedList<CentralizedTask>> plan) {
     	HashMap<Integer, LinkedList<CentralizedTask>> copy = new HashMap<Integer, LinkedList<CentralizedTask>>();
     	for(Entry<Integer, LinkedList<CentralizedTask>> entry : plan.entrySet()){
@@ -109,6 +151,11 @@ public class CentralizedPlan {
     	}
     	return copy;
     }
+    
+	/**
+	 * Print ordered list of tasks assigned to each vehicle
+	 * 
+	 */
     public void paint() {
     	for (Vehicle v : vehicles) {
     		System.out.println("Vehicle " + v.id());
@@ -117,6 +164,12 @@ public class CentralizedPlan {
     		}
     	}
     }
+    
+	/**
+	 * Number of tasks per vehicle
+	 * 
+	 * @return: String 
+	 */
     public String toString() {
     	String distribution = "";
     	for (Vehicle v : vehicles) {
@@ -124,6 +177,12 @@ public class CentralizedPlan {
     	}
     	return distribution;
     }
+    
+	/**
+	 * Number of vehicles working in the plan
+	 * 
+	 * @return: number of vehicles
+	 */
 	public int getVehicles() {
 		int nVehicles = 0;
     	for (Vehicle v : vehicles) {

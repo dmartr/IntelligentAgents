@@ -64,18 +64,28 @@ public class CentralizedTemplate implements CentralizedBehavior {
     public List<Plan> plan(List<Vehicle> vehicles, TaskSet tasks) {
         long time_start = System.currentTimeMillis();
         SLS sls = new SLS(vehicles, new ArrayList(tasks));
+        
+        // Initial solution: Biggest Vehicle, RR or Shortest distance
         CentralizedPlan selectedPlan = sls.selectInitialSolutionDistance();
+        
+        // Initial distribution of tasks
         System.out.println("INITIAL PLAN:");
 		System.out.println("	Task distribution: " + selectedPlan.toString());
         //selectedPlan.paint();
+		
+		// Maximum number of iterations
         int MAX_ITERS = 5000;
         for (int i = 0; i<MAX_ITERS; i++) {
+        	// Find all possible neighbors
         	ArrayList<CentralizedPlan> neighbors = sls.chooseNeighbors(selectedPlan);
         	if (neighbors != null) {
+        		// Choose the best plan
 	        	CentralizedPlan newPlan = sls.localChoice(selectedPlan, neighbors);
 	        	selectedPlan = newPlan;
         	}
         }
+        
+        // Final distribution of the tasks, cost and distance
         System.out.println("FINAL PLAN:");
 		System.out.println("	Task distribution: " + selectedPlan.toString());
 		System.out.println("	Cost: " + selectedPlan.planCost());
@@ -87,7 +97,6 @@ public class CentralizedTemplate implements CentralizedBehavior {
         	Plan vehiclePlan = centralizedPlan(v, selectedPlan.planTasks.get(v.id()));
     		plans.add(vehiclePlan);
         }
-//		System.out.println("Agent " + agent.id() + " has tasks " + tasks);
         
         long time_end = System.currentTimeMillis();
         long duration = time_end - time_start;
@@ -96,6 +105,11 @@ public class CentralizedTemplate implements CentralizedBehavior {
         return plans;
     }
 
+	/**
+	 * From the chosen CentralizedPlan, create a Plan that Logist can understand
+	 * 
+	 * @returns Final Plan
+	 */
     private Plan centralizedPlan(Vehicle vehicle, LinkedList<CentralizedTask> tasks) {
         City current = vehicle.getCurrentCity();
         Plan plan = new Plan(current);
