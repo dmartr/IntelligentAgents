@@ -114,10 +114,7 @@ public class SLS {
 		Random r = new Random();
 		ArrayList<CentralizedPlan> neighbors = new ArrayList<CentralizedPlan>();
 		if (plan.planTasks.get(selectedVehicle).size() > 0) {
-			int randomIndex = r.nextInt( plan.planTasks.get(selectedVehicle).size());
-		
-
-			CentralizedTask firstTaskV1 = plan.planTasks.get(selectedVehicle).remove(randomIndex);
+			CentralizedTask firstTaskV1 = plan.planTasks.get(selectedVehicle).pollFirst();
 			CentralizedTask secondTaskV1 = null;
 			LinkedList<CentralizedTask> tasksCopy = new LinkedList<CentralizedTask>(plan.planTasks.get(selectedVehicle));
 	

@@ -64,7 +64,7 @@ public class CentralizedTemplate implements CentralizedBehavior {
     public List<Plan> plan(List<Vehicle> vehicles, TaskSet tasks) {
         long time_start = System.currentTimeMillis();
         SLS sls = new SLS(vehicles, new ArrayList(tasks));
-        CentralizedPlan selectedPlan = sls.selectInitialSolutionRR();
+        CentralizedPlan selectedPlan = sls.selectInitialSolutionDistance();
         System.out.println("INITIAL PLAN:");
 		System.out.println("	Task distribution: " + selectedPlan.toString());
         //selectedPlan.paint();
