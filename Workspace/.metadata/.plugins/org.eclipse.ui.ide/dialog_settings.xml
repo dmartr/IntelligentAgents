@@ -5,6 +5,8 @@
 		<item value="false" key="WizardProjectsImportPage.STORE_COPY_PROJECT_ID"/>
 		<item value="false" key="WizardProjectsImportPage.STORE_NESTED_PROJECTS"/>
 		<list key="WizardProjectsImportPage.STORE_DIRECTORIES">
+			<item value="/Users/dmartr/Desktop/EPFL/IntelligentAgents/Workspace/auction"/>
+			<item value="/Users/dmartr/Desktop/EPFL/IntelligentAgents/Workspace/centralized"/>
 			<item value="/Users/dmartr/Desktop/EPFL/Intelligent Agents/Workspace"/>
 		</list>
 		<list key="WizardProjectsImportPage.STORE_ARCHIVES">

@@ -1,27 +1,12 @@
 package template;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Queue;
 import java.util.Random;
 
-import logist.LogistSettings;
-
-import logist.Measures;
-import logist.behavior.AuctionBehavior;
-import logist.behavior.CentralizedBehavior;
-import logist.agent.Agent;
-import logist.config.Parsers;
-import logist.simulation.Vehicle;
-import logist.plan.Plan;
 import logist.task.Task;
-import logist.task.TaskDistribution;
-import logist.task.TaskSet;
-import logist.topology.Topology;
-import logist.topology.Topology.City;
+
 
 
 /**
@@ -30,7 +15,7 @@ import logist.topology.Topology.City;
  */
 public class SLS {
 	
-	public List<Vehicle> vehicles = new ArrayList<Vehicle>();
+	public List<AuctionVehicle> vehicles = new ArrayList<AuctionVehicle>();
 	public List<Task> tasks = new ArrayList<Task>();
 
 	/**
@@ -39,7 +24,7 @@ public class SLS {
 	 * @param: vehicles: List of vehicles 
 	 * @param: tasks: List of tasks
 	 */
-	public SLS(List<Vehicle> vehicles, List<Task> tasks) {
+	public SLS(List<AuctionVehicle> vehicles, List<Task> tasks) {
 		this.vehicles = vehicles;
 		this.tasks = tasks;
 	}
@@ -51,25 +36,25 @@ public class SLS {
 	 */
 	public CentralizedPlan selectInitialSolution() {
 		CentralizedPlan initialPlan = new CentralizedPlan(vehicles);
-		
+
 		int maxCapacity = 0;
-		Vehicle biggestVehicle = vehicles.get(0);
-		for (Vehicle v : vehicles) {
-			initialPlan.planTasks.put(v.id(), new LinkedList<CentralizedTask>());
-			if (v.capacity() > maxCapacity) {
-				maxCapacity = v.capacity();
+		AuctionVehicle biggestVehicle = vehicles.get(0);
+		for (AuctionVehicle v : vehicles) {
+			initialPlan.planTasks.put(v.getVehicle().id(), new LinkedList<AuctionTask>());
+			if (v.getVehicle().capacity() > maxCapacity) {
+				maxCapacity = v.getVehicle().capacity();
 				biggestVehicle = v;
 			}
 		}
 		
 		for (Task task : tasks) {
-			CentralizedTask pickupTask = new CentralizedTask("PICKUP", task);
-			CentralizedTask deliveryTask = new CentralizedTask("DELIVERY", task);
+			AuctionTask pickupTask = new AuctionTask("PICKUP", task);
+			AuctionTask deliveryTask = new AuctionTask("DELIVERY", task);
 			
-			LinkedList<CentralizedTask> taskList = initialPlan.planTasks.get(biggestVehicle.id());
+			LinkedList<AuctionTask> taskList = initialPlan.planTasks.get(biggestVehicle.getVehicle().id());
 			taskList.addLast(pickupTask);
 			taskList.addLast(deliveryTask);
-			initialPlan.planTasks.put(biggestVehicle.id(), taskList);
+			initialPlan.planTasks.put(biggestVehicle.getVehicle().id(), taskList);
 		}
 		return initialPlan;
 		
@@ -82,23 +67,22 @@ public class SLS {
 	 */
 	public CentralizedPlan selectInitialSolutionRR() {
 		CentralizedPlan initialPlan = new CentralizedPlan(vehicles);
-		for (Vehicle v : vehicles) {
-			initialPlan.planTasks.put(v.id(), new LinkedList<CentralizedTask>());
+		for (AuctionVehicle v : vehicles) {
+			initialPlan.planTasks.put(v.getVehicle().id(), new LinkedList<AuctionTask>());
 		}
 		int vehicle_id = 0;
 		for (Task task : tasks) {
 			if (vehicle_id == vehicles.size()) vehicle_id = 0;
-			CentralizedTask pickupTask = new CentralizedTask("PICKUP", task);
-			CentralizedTask deliveryTask = new CentralizedTask("DELIVERY", task);
+			AuctionTask pickupTask = new AuctionTask("PICKUP", task);
+			AuctionTask deliveryTask = new AuctionTask("DELIVERY", task);
 			
-			LinkedList<CentralizedTask> taskList = initialPlan.planTasks.get(vehicle_id);
+			LinkedList<AuctionTask> taskList = initialPlan.planTasks.get(vehicle_id);
 			taskList.addLast(pickupTask);
 			taskList.addLast(deliveryTask);
 			initialPlan.planTasks.put(vehicle_id, taskList);
 			vehicle_id++;
 		}
-		return initialPlan;
-		
+		return initialPlan;	
 	}
 	
 	/**
@@ -108,25 +92,25 @@ public class SLS {
 	 */
 	public CentralizedPlan selectInitialSolutionDistance() {
 		CentralizedPlan initialPlan = new CentralizedPlan(vehicles);
-		for (Vehicle v : vehicles) {
-			initialPlan.planTasks.put(v.id(), new LinkedList<CentralizedTask>());
+		for (AuctionVehicle v : vehicles) {
+			initialPlan.planTasks.put(v.getVehicle().id(), new LinkedList<AuctionTask>());
 		}
 
 		for (Task task : tasks) {
 
-			CentralizedTask pickupTask = new CentralizedTask("PICKUP", task);
-			CentralizedTask deliveryTask = new CentralizedTask("DELIVERY", task);
+			AuctionTask pickupTask = new AuctionTask("PICKUP", task);
+			AuctionTask deliveryTask = new AuctionTask("DELIVERY", task);
 			int vehicle_id = -1;
 			double min_distance = Double.POSITIVE_INFINITY;
-			for (Vehicle v : vehicles) {
-				double distance = v.getCurrentCity().distanceTo(task.pickupCity);
+			for (AuctionVehicle v : vehicles) {
+				double distance = v.getVehicle().getCurrentCity().distanceTo(task.pickupCity);
 				if (distance < min_distance) {
 					min_distance = distance;
-					vehicle_id = v.id();
+					vehicle_id = v.getVehicle().id();
 				}
 			}
 			
-			LinkedList<CentralizedTask> taskList = initialPlan.planTasks.get(vehicle_id);
+			LinkedList<AuctionTask> taskList = initialPlan.planTasks.get(vehicle_id);
 			taskList.addLast(pickupTask);
 			taskList.addLast(deliveryTask);
 			initialPlan.planTasks.put(vehicle_id, taskList);
@@ -146,14 +130,13 @@ public class SLS {
 	 */
 	public ArrayList<CentralizedPlan> changeVehicle(CentralizedPlan plan, int selectedVehicle) {
 
-		Random r = new Random();
 		ArrayList<CentralizedPlan> neighbors = new ArrayList<CentralizedPlan>();
 		if (plan.planTasks.get(selectedVehicle).size() > 0) {
-			CentralizedTask firstTaskV1 = plan.planTasks.get(selectedVehicle).pollFirst();
-			CentralizedTask secondTaskV1 = null;
-			LinkedList<CentralizedTask> tasksCopy = new LinkedList<CentralizedTask>(plan.planTasks.get(selectedVehicle));
+			AuctionTask firstTaskV1 = plan.planTasks.get(selectedVehicle).pollFirst();
+			AuctionTask secondTaskV1 = null;
+			LinkedList<AuctionTask> tasksCopy = new LinkedList<AuctionTask>(plan.planTasks.get(selectedVehicle));
 	
-			for (CentralizedTask t : tasksCopy ) {
+			for (AuctionTask t : tasksCopy ) {
 				if (t.task.id == firstTaskV1.task.id) {
 					secondTaskV1 = plan.planTasks.get(selectedVehicle).remove(plan.planTasks.get(selectedVehicle).indexOf(t));
 				}
@@ -163,7 +146,7 @@ public class SLS {
 	
 				if (vehicle != selectedVehicle) {
 					CentralizedPlan neighbor = new CentralizedPlan(plan);
-					LinkedList<CentralizedTask> tasksNeighborV1 = neighbor.planTasks.get(vehicle);
+					LinkedList<AuctionTask> tasksNeighborV1 = neighbor.planTasks.get(vehicle);
 					tasksNeighborV1.addFirst(secondTaskV1);
 					tasksNeighborV1.addFirst(firstTaskV1);
 					neighbor.planTasks.put(vehicle, tasksNeighborV1);
@@ -188,13 +171,13 @@ public class SLS {
 	 */
 	public ArrayList<CentralizedPlan> changeOrder(CentralizedPlan plan, int selectedVehicle) {
 		ArrayList<CentralizedPlan> neighbors = new ArrayList<CentralizedPlan>();
-		LinkedList<CentralizedTask> taskList = plan.planTasks.get(selectedVehicle);
+		LinkedList<AuctionTask> taskList = plan.planTasks.get(selectedVehicle);
 		for (int i=0; i<taskList.size(); i++) {
 			for (int j= i+1; j<taskList.size();j++) {
 				CentralizedPlan neighbor = new CentralizedPlan(plan);
-				LinkedList<CentralizedTask> neighborTaskList = neighbor.planTasks.get(selectedVehicle);
-				CentralizedTask firstTask = taskList.get(i);
-				CentralizedTask secondTask = taskList.get(j);
+				LinkedList<AuctionTask> neighborTaskList = neighbor.planTasks.get(selectedVehicle);
+				AuctionTask firstTask = taskList.get(i);
+				AuctionTask secondTask = taskList.get(j);
 				neighborTaskList.add(i, secondTask);
 				neighborTaskList.remove(i+1);
 				neighborTaskList.add(j, firstTask);

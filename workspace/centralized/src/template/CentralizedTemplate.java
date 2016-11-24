@@ -66,11 +66,11 @@ public class CentralizedTemplate implements CentralizedBehavior {
         SLS sls = new SLS(vehicles, new ArrayList(tasks));
         
         // Initial solution: Biggest Vehicle, RR or Shortest distance
-        CentralizedPlan selectedPlan = sls.selectInitialSolutionDistance();
+        CentralizedPlan selectedPlan = sls.selectInitialSolutionDistance(); //selectInitialSolution/selectInitialSolutionRR
         
         // Initial distribution of tasks
-        System.out.println("INITIAL PLAN:");
-		System.out.println("	Task distribution: " + selectedPlan.toString());
+        //System.out.println("INITIAL PLAN:");
+		//System.out.println("	Task distribution: " + selectedPlan.toString());
         //selectedPlan.paint();
 		
 		// Maximum number of iterations
