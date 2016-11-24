@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/LogistLibrary"/>
+	<classpathentry kind="lib" path="/Users/nachoaguadoc/Universidad/Intelligent Agents/workspace/logist/lib/repast.jar"/>
+	<classpathentry kind="lib" path="/Users/nachoaguadoc/Universidad/Intelligent Agents/workspace/logist/lib/plot.jar"/>
+	<classpathentry kind="lib" path="/Users/nachoaguadoc/Universidad/Intelligent Agents/workspace/logist/lib/jsolver.jar"/>
+	<classpathentry kind="lib" path="/Users/nachoaguadoc/Universidad/Intelligent Agents/workspace/logist/lib/jdom.jar"/>
+	<classpathentry kind="lib" path="/Users/nachoaguadoc/Universidad/Intelligent Agents/workspace/logist/lib/commons-math-1.1.jar"/>
+	<classpathentry kind="lib" path="/Users/nachoaguadoc/Universidad/Intelligent Agents/workspace/logist/lib/colt.jar"/>
+	<classpathentry kind="lib" path="/Users/nachoaguadoc/Universidad/Intelligent Agents/workspace/logist/logist.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="file:/Users/dmartr/Desktop/EPFL/Intelligent%20Agents/Workspace/doc/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
