@@ -24,6 +24,10 @@ public class CentralizedPlan {
 	 */
 	public CentralizedPlan(List<AuctionVehicle> vehicles) {
 		this.planTasks = new HashMap<Integer, LinkedList<AuctionTask>>();
+	
+		for (AuctionVehicle v : vehicles) {
+			this.planTasks.put(v.vehicle.id(), new LinkedList<AuctionTask>());
+		}
 		this.vehicles = vehicles;
 	}
 	
@@ -117,7 +121,6 @@ public class CentralizedPlan {
 						return false;
 					}
 				} else {
-
 					if (!toPickup.contains(Integer.toString(task.task.id))) {
 						//System.out.println("Not pickup");
 						return false;
@@ -170,7 +173,7 @@ public class CentralizedPlan {
     public String toString() {
     	String distribution = "";
     	for (AuctionVehicle v : vehicles) {
-    		distribution += planTasks.get(v.getVehicle().id()).size() + " ";
+    		distribution =distribution +  planTasks.get(v.getVehicle().id()).size() + " ";
     	}
     	return distribution;
     }

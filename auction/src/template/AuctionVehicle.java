@@ -8,14 +8,14 @@ import logist.task.*;
 
 public class AuctionVehicle {
 
-	private Vehicle vehicle;
-	private double costPerKm;
-	private int capacity;
-	private City homeCity;
+	public Vehicle vehicle;
+	public double costPerKm;
+	public int capacity;
+	public City homeCity;
 	public LinkedList<AuctionTask> vehicleTasks;
 	
 	public AuctionVehicle(Vehicle vehicle){
-		vehicle = this.vehicle;
+		this.vehicle = vehicle;
 		costPerKm = vehicle.costPerKm();
 		capacity = vehicle.capacity();
 		homeCity = vehicle.homeCity();

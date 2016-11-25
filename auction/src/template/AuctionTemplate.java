@@ -3,6 +3,7 @@ package template;
 import java.io.File;
 //the list of imports
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
@@ -42,6 +43,8 @@ public class AuctionTemplate implements AuctionBehavior {
 	private double oppCost;
 	private double oppNCost;
 	
+	private double adjustRatio;
+	
 	private ArrayList<AuctionVehicle> myVehicles;
 	private ArrayList<AuctionVehicle> oppVehicles;
 	
@@ -57,16 +60,16 @@ public class AuctionTemplate implements AuctionBehavior {
 		this.agent = agent;
 		this.vehicle = agent.vehicles().get(0);
 		this.currentCity = vehicle.homeCity();
-		
+
 		probability = new double[topology.size()][topology.size()];
 		
 		List<Vehicle> vehicles = agent.vehicles();
 		myVehicles = new ArrayList<AuctionVehicle>(vehicles.size());
 		for(Vehicle v : vehicles){
-			AuctionVehicle auctionVehicle = new AuctionVehicle(vehicle);
+			AuctionVehicle auctionVehicle = new AuctionVehicle(v);
 			myVehicles.add(auctionVehicle);
 		}
-		
+
 		this.myPlan = new AuctionPlan(myVehicles);
 		
 		long seed = -9019554669489983951L * currentCity.hashCode() * agent.id();
@@ -87,7 +90,7 @@ public class AuctionTemplate implements AuctionBehavior {
 	public void auctionResult(Task previous, int winner, Long[] bids) {
 		long myBid = bids[agent.id()];
 		long oppBid = bids[1-agent.id()];
-		
+		System.out.println(myBid + " vs " + oppBid);
 		if (winner == agent.id()) {
 			currentCity = previous.deliveryCity;
 			myCost = myNCost;
@@ -95,7 +98,7 @@ public class AuctionTemplate implements AuctionBehavior {
 			
 		} else {
 			oppCost = oppNCost;
-			oppPlan.updatePlan();
+			//oppPlan.updatePlan();
 		}
 	}
 	
@@ -104,10 +107,10 @@ public class AuctionTemplate implements AuctionBehavior {
 
 		if (myPlan.getBiggestVehicle().getCapacity() < task.weight)
 			return null;
-		
+
 		myNCost = myPlan.getNewPlan(task).planCost();
-		oppNCost = oppPlan.getNewPlan(task).planCost();
-		
+		//oppNCost = oppPlan.getNewPlan(task).planCost();
+		oppNCost = 0;
 		double myMCost = myNCost-myCost;
 		double oppMCost = oppNCost-oppCost;
 		//
@@ -124,7 +127,7 @@ public class AuctionTemplate implements AuctionBehavior {
 
 	@Override
 	public List<Plan> plan(List<Vehicle> vehicles, TaskSet tasks) {
-		
+
 		AuctionPlan auctionPlan = new AuctionPlan(myVehicles);
 //		System.out.println("Agent " + agent.id() + " has tasks " + tasks);
 		SLS sls = new SLS(myVehicles, new ArrayList(tasks));
