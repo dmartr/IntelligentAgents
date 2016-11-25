@@ -3,6 +3,7 @@ package template;
 import java.io.File;
 //the list of imports
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -49,12 +50,15 @@ public class AuctionTemplate implements AuctionBehavior {
 	
 	private ArrayList<AuctionVehicle> myVehicles;
 	private ArrayList<AuctionVehicle> oppVehicles;
+	private ArrayList<Task> myPlanTasks;
+	private ArrayList<Task> oppPlanTasks;
 	
 	private long allowedTime;
 	double [][] probability;
 	
     private long timeout_setup;
     private long timeout_plan;
+    
 	@Override
 	public void setup(Topology topology, TaskDistribution distribution,
 			Agent agent) {
@@ -62,6 +66,9 @@ public class AuctionTemplate implements AuctionBehavior {
 		this.topology = topology;
 		this.distribution = distribution;
 		this.agent = agent;
+		
+		myPlanTasks = new ArrayList<Task>();
+		oppPlanTasks = new ArrayList<Task>();
 
 		probability = new double[topology.size()][topology.size()];
 		
@@ -93,18 +100,18 @@ public class AuctionTemplate implements AuctionBehavior {
 	public void auctionResult(Task previous, int winner, Long[] bids) {
 		long myBid = bids[agent.id()];
 		long oppBid = bids[1-agent.id()];			
-		//System.out.println("I'm agent " + agent.id() + " and I bid " + myBid + " and my marginal is " + myMarginalCost);
-
+			//System.out.println("I'm agent " + agent.id() + " and I bid " + myBid + " and my marginal is " + myMarginalCost);
 		//System.out.println(myBid + " vs " + oppBid);
 		if (winner == agent.id()) {
 			//System.out.println("Agent " + agent.id() + " won!");
-
+			myPlanTasks.add(previous);
 			currentCity = previous.deliveryCity;
 			myCost = myNCost;
 			myPlan.updatePlan();
 			payDay += myBid;
 			
 		} else {
+			oppPlanTasks.add(previous);
 			oppCost = oppNCost;
 			//oppPlan.updatePlan();
 		}
@@ -144,7 +151,7 @@ public class AuctionTemplate implements AuctionBehavior {
 	@Override
 	public List<Plan> plan(List<Vehicle> vehicles, TaskSet tasks) {
         long time_start = System.currentTimeMillis();
-
+        double timeMargin = 0.8;
 		AuctionPlan auctionPlan = new AuctionPlan(myVehicles);
 //		System.out.println("Agent " + agent.id() + " has tasks " + tasks);
 		auctionPlan.getFinalPlan(tasks);
@@ -153,14 +160,15 @@ public class AuctionTemplate implements AuctionBehavior {
         int MAX_ITERS = 5000;
         for (int i = 0; i<MAX_ITERS; i++) {
         	// Find all possible neighbors
-        	ArrayList<CentralizedPlan> neighbors = sls.chooseNeighbors(slsPlan);
-        	if (neighbors != null) {
-        		// Choose the best plan
-	        	CentralizedPlan newPlan = sls.localChoice(slsPlan, neighbors);
-	        	slsPlan = newPlan;
-        	}
+            if (System.currentTimeMillis() - time_start > allowedTime*timeMargin) {
+            	ArrayList<CentralizedPlan> neighbors = sls.chooseNeighbors(slsPlan);
+            	if (neighbors != null) {
+            		// Choose the best plan
+            		CentralizedPlan newPlan = sls.localChoice(slsPlan, neighbors);
+            		slsPlan = newPlan;
+            	}
+            }
         }
-        
         // Final distribution of the tasks, cost and distance
         System.out.println("FINAL PLAN:");
 		System.out.println("	Task distribution: " + slsPlan.toString());
