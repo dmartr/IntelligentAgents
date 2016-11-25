@@ -39,13 +39,20 @@ public class AuctionTemplate implements AuctionBehavior {
 	private AuctionPlan oppPlan;
 	
 	private double myCost;
-	private double myNCost;
+	private double myNewCost;
 	private double oppCost;
-	private double oppNCost;
+	private double oppNewCost;
 	private double myMarginalCost;
+	private double oppMarginalCost;
 	
-	private double payDay;
+	private double myMarginalCostPerKm;
+	private double oppMarginalCostPerKm;
 	
+	private double myPayDay;
+	private double oppPayDay;
+
+	
+	private int round = 0;
 	private double adjustRatio;
 	
 	private ArrayList<AuctionVehicle> myVehicles;
@@ -81,6 +88,8 @@ public class AuctionTemplate implements AuctionBehavior {
 		}
 		System.out.println(agent.vehicles());
 		this.myPlan = new AuctionPlan(myVehicles);
+		this.oppPlan = new AuctionPlan(myVehicles);
+		
 		long seed = -9019554669489983951L;
 		//long seed = -9019554669489983951L * currentCity.hashCode() * agent.id();
 		this.random = new Random(seed);
@@ -99,21 +108,23 @@ public class AuctionTemplate implements AuctionBehavior {
 	@Override
 	public void auctionResult(Task previous, int winner, Long[] bids) {
 		long myBid = bids[agent.id()];
-		long oppBid = bids[1-agent.id()];			
+		long oppBid = bids[1-agent.id()];		
+		round++;
 			//System.out.println("I'm agent " + agent.id() + " and I bid " + myBid + " and my marginal is " + myMarginalCost);
 		//System.out.println(myBid + " vs " + oppBid);
 		if (winner == agent.id()) {
 			//System.out.println("Agent " + agent.id() + " won!");
 			myPlanTasks.add(previous);
 			currentCity = previous.deliveryCity;
-			myCost = myNCost;
+			myCost = myNewCost;
 			myPlan.updatePlan();
-			payDay += myBid;
+			myPayDay += myBid;
 			
 		} else {
 			oppPlanTasks.add(previous);
-			oppCost = oppNCost;
-			//oppPlan.updatePlan();
+			oppCost = oppNewCost;
+			oppPlan.updatePlan();
+			oppPayDay += oppBid;
 		}
 	}
 	
@@ -123,29 +134,19 @@ public class AuctionTemplate implements AuctionBehavior {
 		if (myPlan.getBiggestVehicle().getCapacity() < task.weight)
 			return null;
 
-		myNCost = myPlan.getNewPlan(task).planCost();
-		myMarginalCost =  myNCost-myCost;
-		//if (myMarginalCost < 0) myMarginalCost = 0;
-		
-		System.out.println("Previous:" +  myCost + " New: " + myNCost + " Marginal:" + myMarginalCost);
-		double bid = myMarginalCost + 1;
-		return (long) Math.round(bid);
-		/**
-		//oppNCost = oppPlan.getNewPlan(task).planCost();
-		//oppNCost = 0;
-		//double myMCost = myNCost-myCost;
-		//double oppMCost = oppNCost-oppCost;
-		
-		long distanceTask = task.pickupCity.distanceUnitsTo(task.deliveryCity);
-		long distanceSum = distanceTask
-				+ currentCity.distanceUnitsTo(task.pickupCity);
-		double marginalCost = Measures.unitsToKM(distanceSum
-				* vehicle.costPerKm());
+		myNewCost = myPlan.getNewPlan(task).planCost();
+		oppNewCost = oppPlan.getNewPlan(task).planCost();
+		myMarginalCost =  myNewCost-myCost;
+		oppMarginalCost = oppNewCost-oppCost;
+		//if (round <=3) {
+			
+			//if (myMarginalCost < 0) myMarginalCost = 0;
+			
+			System.out.println("Previous:" +  myCost + " New: " + myNewCost + " Marginal:" + myMarginalCost);
+			double bid = myMarginalCost + 1;
+			return (long) Math.round(bid);
+		//}
 
-		double ratio = 1.0 + (random.nextDouble() * 0.05 * task.id);
-		double bid = ratio * marginalCost;
-		return (long) Math.round(bid);
-		**/
 	}
 
 	@Override
