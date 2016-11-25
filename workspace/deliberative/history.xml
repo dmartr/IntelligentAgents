@@ -2,5 +2,5 @@
 
 <history configuration="config/deliberative.xml">
 	<agents>
-		<agent name="deliberative-rla">
+		<agent name="deliberative-main">
 			<vehicle name="Vehicle 1"/>

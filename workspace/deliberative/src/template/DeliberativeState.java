@@ -287,6 +287,12 @@ public class DeliberativeState {
     	return distance;
     }
     
+	/**
+	 * Get the minimum distance needed to achieve a Goal State from the Current City
+	 * 
+	 * @returns Distance needed
+	 * 
+	 */
     public double getMinimumFutureDistance() {
     	double min_future_distance = Double.NEGATIVE_INFINITY;
     	for (Task pickupTask : this.toPickupList) {
