@@ -72,5 +72,8 @@ public class AuctionPlan {
 	public CentralizedPlan getBestPlan() {
 		return bestPlan;
 	}
+	public void updatePlan(){
+		actualPlan = bestPlan;
+	}
 	
 }

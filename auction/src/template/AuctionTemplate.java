@@ -1,12 +1,15 @@
 package template;
 
+import java.io.File;
 //the list of imports
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import logist.LogistSettings;
 import logist.Measures;
 import logist.behavior.AuctionBehavior;
+import logist.config.Parsers;
 import logist.agent.Agent;
 import logist.simulation.Vehicle;
 import logist.plan.Plan;
@@ -30,7 +33,21 @@ public class AuctionTemplate implements AuctionBehavior {
 	private Random random;
 	private Vehicle vehicle;
 	private City currentCity;
-
+	
+	private AuctionPlan myPlan;
+	private AuctionPlan oppPlan;
+	
+	private double myCost;
+	private double myNCost;
+	private double oppCost;
+	private double oppNCost;
+	
+	private ArrayList<AuctionVehicle> myVehicles;
+	private ArrayList<AuctionVehicle> oppVehicles;
+	
+	private long allowedTime;
+	double [][] probability;
+	
 	@Override
 	public void setup(Topology topology, TaskDistribution distribution,
 			Agent agent) {
@@ -40,24 +57,60 @@ public class AuctionTemplate implements AuctionBehavior {
 		this.agent = agent;
 		this.vehicle = agent.vehicles().get(0);
 		this.currentCity = vehicle.homeCity();
-
+		
+		probability = new double[topology.size()][topology.size()];
+		
+		List<Vehicle> vehicles = agent.vehicles();
+		myVehicles = new ArrayList<AuctionVehicle>(vehicles.size());
+		for(Vehicle v : vehicles){
+			AuctionVehicle auctionVehicle = new AuctionVehicle(vehicle);
+			myVehicles.add(auctionVehicle);
+		}
+		
+		this.myPlan = new AuctionPlan(myVehicles);
+		
 		long seed = -9019554669489983951L * currentCity.hashCode() * agent.id();
 		this.random = new Random(seed);
+		
+		LogistSettings ls = null;
+		try {
+            ls = Parsers.parseSettings("config"+File.separator+"settings_auction.xml");
+    		allowedTime = ls.get(LogistSettings.TimeoutKey.PLAN);
+        }
+        catch (Exception exc) {
+            System.out.println("There was a problem loading the auction configuration file.");
+        }
+		
 	}
 
 	@Override
 	public void auctionResult(Task previous, int winner, Long[] bids) {
+		long myBid = bids[agent.id()];
+		long oppBid = bids[1-agent.id()];
+		
 		if (winner == agent.id()) {
 			currentCity = previous.deliveryCity;
+			myCost = myNCost;
+			myPlan.updatePlan();
+			
+		} else {
+			oppCost = oppNCost;
+			oppPlan.updatePlan();
 		}
 	}
 	
 	@Override
 	public Long askPrice(Task task) {
 
-		if (vehicle.capacity() < task.weight)
+		if (myPlan.getBiggestVehicle().getCapacity() < task.weight)
 			return null;
-
+		
+		myNCost = myPlan.getNewPlan(task).planCost();
+		oppNCost = oppPlan.getNewPlan(task).planCost();
+		
+		double myMCost = myNCost-myCost;
+		double oppMCost = oppNCost-oppCost;
+		//
 		long distanceTask = task.pickupCity.distanceUnitsTo(task.deliveryCity);
 		long distanceSum = distanceTask
 				+ currentCity.distanceUnitsTo(task.pickupCity);
@@ -66,17 +119,19 @@ public class AuctionTemplate implements AuctionBehavior {
 
 		double ratio = 1.0 + (random.nextDouble() * 0.05 * task.id);
 		double bid = ratio * marginalCost;
-
 		return (long) Math.round(bid);
 	}
 
 	@Override
 	public List<Plan> plan(List<Vehicle> vehicles, TaskSet tasks) {
 		
+		AuctionPlan auctionPlan = new AuctionPlan(myVehicles);
 //		System.out.println("Agent " + agent.id() + " has tasks " + tasks);
-
+		SLS sls = new SLS(myVehicles, new ArrayList(tasks));
+		CentralizedPlan selectedPlan = sls.selectInitialSolutionDistance();
+		
 		Plan planVehicle1 = naivePlan(vehicle, tasks);
-
+		
 		List<Plan> plans = new ArrayList<Plan>();
 		plans.add(planVehicle1);
 		while (plans.size() < vehicles.size())
