@@ -1,0 +1,33 @@
+package template;
+
+import java.util.HashMap;
+import java.util.LinkedList;
+
+public class CentralizedPlan {
+	public HashMap<Integer, LinkedList<CentralizedTask>> plan;
+	
+	public CentralizedPlan(HashMap<Integer, LinkedList<CentralizedTask>> plan) {
+		this.plan = plan;
+	}
+	
+	public CentralizedTask nextTask(HashMap<Integer, LinkedList<CentralizedTask>> plan, int vehicle) {
+		return plan.get(vehicle).get(0);
+	}
+	
+	public CentralizedTask nextTask(HashMap<Integer, LinkedList<CentralizedTask>> plan, CentralizedTask task) {
+		for (Integer i : plan.keySet()) {
+			for (CentralizedTask t : plan.get(i)) {
+				if (t.equals(task)) {
+					int index = plan.get(i).indexOf(t);
+					if (plan.get(i).size() <= index+1) {
+						return null;
+					} else {
+						return plan.get(i).get(index+1);
+					}
+				}
+			}
+		}
+		return null;
+
+	}
+}

@@ -1,6 +1,0 @@
-interface Heuristic {
-   public void getG();
-   public void getH();
-
-   public void getF();
-}

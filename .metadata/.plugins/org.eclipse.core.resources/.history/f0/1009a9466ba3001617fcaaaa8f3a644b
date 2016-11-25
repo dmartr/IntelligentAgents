@@ -1,0 +1,44 @@
+package template;
+
+import java.util.HashMap;
+import java.util.LinkedList;
+
+public class CentralizedPlan {
+	public HashMap<Integer, LinkedList<CentralizedTask>> planTasks;
+	
+	public CentralizedPlan() {
+		this.planTasks = new HashMap<Integer, LinkedList<CentralizedTask>>();
+	}
+	public CentralizedPlan(HashMap<Integer, LinkedList<CentralizedTask>> planTasks) {
+		this.planTasks = planTasks;
+	}
+	public CentralizedPlan(CentralizedPlan plan) {
+		this.planTasks = plan.planTasks;
+	}
+	
+	public CentralizedTask nextTask(int vehicle) {
+		return planTasks.get(vehicle).get(0);
+	}
+	
+	public CentralizedTask nextTask(CentralizedTask task) {
+		for (Integer i : planTasks.keySet()) {
+			for (CentralizedTask t : planTasks.get(i)) {
+				if (t.equals(task)) {
+					int index = planTasks.get(i).indexOf(t);
+					if (planTasks.get(i).size() <= index+1) {
+						return null;
+					} else {
+						return planTasks.get(i).get(index+1);
+					}
+				}
+			}
+		}
+		return null;
+	}
+	
+	public CentralizedPlan changeVehicle(int initialVehicle, int finalVehicle) {
+		CentralizedTask changedTask = plan.get(initialVehicle).getFirst();
+		
+
+	}
+}

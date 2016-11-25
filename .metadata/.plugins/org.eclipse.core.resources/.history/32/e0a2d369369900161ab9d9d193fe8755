@@ -1,9 +1,0 @@
-package template;
-
-public class Heuristic {
-	
-	public int getG(DeliberativeState state) {
-		int g = state.benefits;
-	}
-
-}

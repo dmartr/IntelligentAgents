@@ -1,0 +1,127 @@
+package template;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+
+import logist.simulation.Vehicle;
+import logist.topology.Topology.City;
+
+public class CentralizedPlan {
+	public HashMap<Integer, LinkedList<CentralizedTask>> planTasks;
+	public int cost;
+	public List<Vehicle> vehicles;
+	
+	public CentralizedPlan(List<Vehicle> vehicles) {
+		this.planTasks = new HashMap<Integer, LinkedList<CentralizedTask>>();
+		this.cost = 0;
+		this.vehicles = vehicles;
+	}
+	public CentralizedPlan(HashMap<Integer, LinkedList<CentralizedTask>> planTasks, List<Vehicle> vehicles) {
+		this.planTasks = planTasks;
+		this.cost = planCost();
+		this.vehicles = vehicles;
+	}
+	public CentralizedPlan(CentralizedPlan plan) {
+		this.planTasks = plan.planTasks;
+		this.cost = plan.cost;
+		this.vehicles = plan.vehicles;
+	}
+	
+	public int planCost() {
+		int tempCost = 0;
+		for (Integer i : planTasks.keySet()) {
+			Vehicle vehicle = vehicles.get(i);
+			City currentCity = vehicle.getCurrentCity();
+			for (CentralizedTask task : planTasks.get(vehicle)) {
+				if (task.pickup) {
+					double distance = currentCity.distanceTo(task.pickupCity);
+					int cost = (int) (distance*vehicle.costPerKm());
+					currentCity = task.pickupCity;
+					tempCost += cost;
+				} else {
+					double distance = currentCity.distanceTo(task.deliveryCity);
+					int cost = (int) (distance*vehicle.costPerKm() - task.reward);
+					currentCity = task.deliveryCity;
+					tempCost += cost;
+				}
+			}	
+		}
+		return tempCost;
+	}
+	
+	public CentralizedTask nextTask(int vehicle) {
+		return planTasks.get(vehicle).getFirst();
+	}
+	
+	public CentralizedTask nextTask(CentralizedTask task) {
+		for (Integer i : planTasks.keySet()) {
+			for (CentralizedTask t : planTasks.get(i)) {
+				if (t.equals(task)) {
+					int index = planTasks.get(i).indexOf(t);
+					if (planTasks.get(i).size() <= index+1) {
+						return null;
+					} else {
+						return planTasks.get(i).get(index+1);
+					}
+				}
+			}
+		}
+		return null;
+	}
+	
+	public CentralizedPlan changeVehicle(int initialVehicle, int finalVehicle) {
+		if (this.planTasks.get(initialVehicle).size() > 0) {
+			CentralizedPlan newPlan = new CentralizedPlan(this);
+			CentralizedTask movedTask = newPlan.planTasks.get(initialVehicle).pollFirst();
+			newPlan.planTasks.get(finalVehicle).addFirst(movedTask);
+			return newPlan;
+		}
+		else {
+			return this;
+		}
+	}
+	
+	public CentralizedPlan changeOrder(int selectedVehicle, CentralizedTask firstTask, CentralizedTask secondTask) {
+		CentralizedPlan newPlan = new CentralizedPlan(this);
+		LinkedList<CentralizedTask> taskList = newPlan.planTasks.get(selectedVehicle);
+		int firstIndex = taskList.indexOf(firstTask);
+		int secondIndex = taskList.indexOf(secondTask);
+		taskList.set(firstIndex, secondTask);
+		taskList.set(secondIndex, firstTask);
+		newPlan.planTasks.put(selectedVehicle, taskList);
+		return newPlan;
+		
+	}
+	
+	public boolean validConstraints(List<Vehicle> vehicles) {
+		for (Integer i : planTasks.keySet()) {
+			int weights = 0;
+			List<String> toPickup = new ArrayList<Integer>();
+			for (CentralizedTask task : planTasks.get(i)) {
+				if (task.pickup) {
+					toPickup.add(task.id);
+					weights += task.weight;
+					if (weights > vehicles.get(i).capacity()) {
+						return false;
+					}
+				} else {
+					if (!toPickup.contains(task.id)) {
+						return false;
+					} else {
+						toPickup.remove(task.id);
+						weights -= task.weight;
+					}
+				}
+			}
+			if (toPickup.size() > 0) {
+				return false;
+			}
+		}
+		return true;
+
+	}
+	
+	
+}

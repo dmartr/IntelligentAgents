@@ -1,0 +1,10 @@
+package template;
+
+import java.util.HashMap;
+import java.util.LinkedList;
+
+public class CentralizedPlan {
+	public HashMap<Integer, LinkedList<CentralizedTask>> plan;
+	
+
+}
