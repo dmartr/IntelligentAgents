@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import logist.task.Task;
+import logist.task.TaskSet;
 
 public class AuctionPlan {
 	
@@ -53,8 +54,8 @@ public class AuctionPlan {
 		return newPlanList;
 	}
 	
-	private CentralizedPlan chooseBestPlan(CentralizedPlan oldPlan, List<CentralizedPlan> newPLanList){
-		CentralizedPlan cheapest = oldPlan; 
+	private CentralizedPlan chooseBestPlan(List<CentralizedPlan> newPLanList){
+		CentralizedPlan cheapest = null; 
 		double minCost = Integer.MAX_VALUE;
 		for(CentralizedPlan plan : newPLanList){
 			double cost = plan.planCost();
@@ -69,8 +70,16 @@ public class AuctionPlan {
 	
 	public CentralizedPlan getNewPlan(Task task){
 		List<CentralizedPlan> newPlanList = insertTask(task);
-		CentralizedPlan newBestPlan = chooseBestPlan(actualPlan, newPlanList);
+		CentralizedPlan newBestPlan = chooseBestPlan(newPlanList);
 		return newBestPlan;
+	}
+	
+	public CentralizedPlan getFinalPlan(TaskSet tasks){
+		for(Task t : tasks){
+			List<CentralizedPlan> newPlanList = insertTask(t);
+			actualPlan = chooseBestPlan(newPlanList);
+		}
+		return actualPlan;
 	}
 	
 	public CentralizedPlan getBestPlan() {
