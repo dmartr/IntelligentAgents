@@ -32,7 +32,6 @@ public class AuctionTemplate implements AuctionBehavior {
 	private TaskDistribution distribution;
 	private Agent agent;
 	private Random random;
-	private Vehicle vehicle;
 	private City currentCity;
 	
 	private AuctionPlan myPlan;
@@ -42,6 +41,9 @@ public class AuctionTemplate implements AuctionBehavior {
 	private double myNCost;
 	private double oppCost;
 	private double oppNCost;
+	private double myMarginalCost;
+	
+	private double payDay;
 	
 	private double adjustRatio;
 	
@@ -60,21 +62,20 @@ public class AuctionTemplate implements AuctionBehavior {
 		this.topology = topology;
 		this.distribution = distribution;
 		this.agent = agent;
-		this.vehicle = agent.vehicles().get(0);
-		this.currentCity = vehicle.homeCity();
 
 		probability = new double[topology.size()][topology.size()];
 		
 		List<Vehicle> vehicles = agent.vehicles();
 		myVehicles = new ArrayList<AuctionVehicle>(vehicles.size());
 		for(Vehicle v : vehicles){
+			System.out.println(v);
 			AuctionVehicle auctionVehicle = new AuctionVehicle(v);
 			myVehicles.add(auctionVehicle);
 		}
-
+		System.out.println(agent.vehicles());
 		this.myPlan = new AuctionPlan(myVehicles);
-		
-		long seed = -9019554669489983951L * currentCity.hashCode() * agent.id();
+		long seed = -9019554669489983951L;
+		//long seed = -9019554669489983951L * currentCity.hashCode() * agent.id();
 		this.random = new Random(seed);
 		
 		LogistSettings ls = null;
@@ -91,12 +92,17 @@ public class AuctionTemplate implements AuctionBehavior {
 	@Override
 	public void auctionResult(Task previous, int winner, Long[] bids) {
 		long myBid = bids[agent.id()];
-		long oppBid = bids[1-agent.id()];
-		System.out.println(myBid + " vs " + oppBid);
+		long oppBid = bids[1-agent.id()];			
+		//System.out.println("I'm agent " + agent.id() + " and I bid " + myBid + " and my marginal is " + myMarginalCost);
+
+		//System.out.println(myBid + " vs " + oppBid);
 		if (winner == agent.id()) {
+			//System.out.println("Agent " + agent.id() + " won!");
+
 			currentCity = previous.deliveryCity;
 			myCost = myNCost;
 			myPlan.updatePlan();
+			payDay += myBid;
 			
 		} else {
 			oppCost = oppNCost;
@@ -111,11 +117,18 @@ public class AuctionTemplate implements AuctionBehavior {
 			return null;
 
 		myNCost = myPlan.getNewPlan(task).planCost();
+		myMarginalCost =  myNCost-myCost;
+		//if (myMarginalCost < 0) myMarginalCost = 0;
+		
+		System.out.println("Previous:" +  myCost + " New: " + myNCost + " Marginal:" + myMarginalCost);
+		double bid = myMarginalCost + 1;
+		return (long) Math.round(bid);
+		/**
 		//oppNCost = oppPlan.getNewPlan(task).planCost();
-		oppNCost = 0;
-		double myMCost = myNCost-myCost;
-		double oppMCost = oppNCost-oppCost;
-		//
+		//oppNCost = 0;
+		//double myMCost = myNCost-myCost;
+		//double oppMCost = oppNCost-oppCost;
+		
 		long distanceTask = task.pickupCity.distanceUnitsTo(task.deliveryCity);
 		long distanceSum = distanceTask
 				+ currentCity.distanceUnitsTo(task.pickupCity);
@@ -125,6 +138,7 @@ public class AuctionTemplate implements AuctionBehavior {
 		double ratio = 1.0 + (random.nextDouble() * 0.05 * task.id);
 		double bid = ratio * marginalCost;
 		return (long) Math.round(bid);
+		**/
 	}
 
 	@Override

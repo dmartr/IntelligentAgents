@@ -89,4 +89,14 @@ public class AuctionPlan {
 		actualPlan = bestPlan;
 	}
 	
+	public int getVehicle(Task task){
+		for(Entry<Integer, LinkedList<AuctionTask>> entry : actualPlan.planTasks.entrySet()){
+			LinkedList<AuctionTask> taskList = entry.getValue();
+			for (AuctionTask t : taskList){
+				if (t.task.equals(task)) return entry.getKey();
+			}
+		}
+		return -1;
+	}
+	
 }
