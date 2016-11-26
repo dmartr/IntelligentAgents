@@ -91,7 +91,7 @@ public class AuctionTemplate implements AuctionBehavior {
 		this.oppRatioMC = 0.2;
 		this.myDistance = 0;
 		this.oppDistance = 0;
-		this.adjustRatio = 1;
+		this.adjustRatio = 1.2;
 		this.minBound = 0;
 		this.maxBound = 0;
 		myPlanTasks = new ArrayList<Task>();
@@ -139,30 +139,35 @@ public class AuctionTemplate implements AuctionBehavior {
 		
 		double myTempDistance = myNewDistance - myDistance;
 		double oppTempDistance = oppNewDistance - oppDistance;
-
 		//System.out.println(oppDistance + " " + oppNewDistance);
 		if (round==1) {
 			
 			myCostPerKm = myMarginalCost/myTempDistance;
 					
 			oppMarginalCost = oppBid;
-			oppCostPerKm = oppMarginalCost/oppTempDistance;
-			oppCostPerKm = Math.max(myCostPerKm*(1-oppRatioMC), oppCostPerKm);
-			oppCostPerKm = Math.min(myCostPerKm*(1+oppRatioMC), oppCostPerKm);
-		} else {
-			if (myTempDistance != 0) {
-				myCostPerKm += myMarginalCost/myTempDistance;
-				myCostPerKm /= 2;
-			}
-			
-			if (oppTempDistance != 0) {
+			if (oppTempDistance > 0) {
 				oppCostPerKm = oppMarginalCost/oppTempDistance;
 				oppCostPerKm = Math.max(myCostPerKm*(1-oppRatioMC), oppCostPerKm);
 				oppCostPerKm = Math.min(myCostPerKm*(1+oppRatioMC), oppCostPerKm);
 			}
+		} else {
+			if (myTempDistance > 0) {
+				myCostPerKm += myMarginalCost/myTempDistance;
+				myCostPerKm /= 2;
+			}
+			if (oppTempDistance > 0) {
+				if (round<5) {
+					oppCostPerKm = oppMarginalCost/oppTempDistance;
+					oppCostPerKm = Math.max(myCostPerKm*(1-oppRatioMC), oppCostPerKm);
+					oppCostPerKm = Math.min(myCostPerKm*(1+oppRatioMC), oppCostPerKm);
+				
+				} else {
+					oppCostPerKm = oppMarginalCost/oppTempDistance;
+				}
+			}
 		}
 		int x = agent.id()-1;
-		//System.out.println("Agent " +  x + " has cost per km of " + oppCostPerKm);
+		System.out.println("Agent " +  x + " has cost per km of " + oppCostPerKm);
 		oppDistance = oppNewDistance;
 
 		if (winner == agent.id()) {
@@ -204,20 +209,17 @@ public class AuctionTemplate implements AuctionBehavior {
 		
 		myMarginalCost =  myNewCost-myCost;
 		oppMarginalCost = oppNewCost-oppCost;
-			
 		
 		double bid;
 		
-		//System.out.println(myMarginalCost + " " + myNewCost + " " + "" + myCost + " " + myPlanTasks.size());
 		if (myPlanTasks.size() < 4) {			
-			bid = myMarginalCost * 0.75;
-			//System.out.println(bid);
+			bid = myMarginalCost * 0.8;
 			return (long) Math.round(bid);
 		} else {
 			
 			minBound = myMarginalCost*0.9;
 			maxBound = oppMarginalCost*1.1;
-			//double probabilityBonus = 1;
+
 			CentralizedPlan thePlan = myPlan.actualPlan;
 			int vehicle = myPlan.getVehicle(task);
 			double sumProbabilities = 0;
@@ -235,7 +237,7 @@ public class AuctionTemplate implements AuctionBehavior {
 						sumProbabilities += distribution.probability(task.pickupCity, newTask.deliveryCity);
 						numProbabilities++;
 					}
-					}
+				}
 				if (newTask.task.equals(task)) greater = true;
 			}
 			double probabilityBonus = 1;
@@ -249,15 +251,13 @@ public class AuctionTemplate implements AuctionBehavior {
 				if (sumProbabilities/numProbabilities < distributionMean) {
 					bid = myMarginalCost;
 				} else {
-					bid = 300;
+					bid = 200;
 				}
 			}
 			else {
-				double initialBid = (oppMarginalCost + myMarginalCost) / 2;
-				bid = Math.max(myMarginalCost, initialBid*adjustRatio*probabilityBonus);
+				//double initialBid = (oppMarginalCost + myMarginalCost) / 2;
+				bid = Math.max(myMarginalCost, myMarginalCost*adjustRatio*probabilityBonus);
 			}
-			//System.out.println(probabilityBonus);
-			//bid = myMarginalCost*1.3;
 
 			return (long) Math.round(bid);
 		}

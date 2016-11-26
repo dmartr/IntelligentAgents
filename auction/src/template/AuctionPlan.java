@@ -48,7 +48,7 @@ public class AuctionPlan {
 					LinkedList <AuctionTask> finalTaskList = new LinkedList<AuctionTask>(newTaskList);
 					finalTaskList.add(pos2, auctionedDeliver);
 					finalPlan.planTasks.put(entry.getKey(), finalTaskList);
-					CentralizedPlan  newCentralizedPlan = new CentralizedPlan(finalPlan.planTasks, plan.vehicles);
+					CentralizedPlan  newCentralizedPlan = new CentralizedPlan(finalPlan);
 					if (newCentralizedPlan.validConstraints()) {
 						newPlanList.add(newCentralizedPlan);
 					}
