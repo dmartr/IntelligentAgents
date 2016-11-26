@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
+import java.util.Map.Entry;
 
 import logist.LogistSettings;
 import logist.Measures;
@@ -31,6 +32,7 @@ public class AuctionTemplate implements AuctionBehavior {
 
 	private Topology topology;
 	private TaskDistribution distribution;
+	private double distributionMean;
 	private Agent agent;
 	private Random random;
 	private City currentCity;
@@ -52,8 +54,8 @@ public class AuctionTemplate implements AuctionBehavior {
 	private double myMarginalCost;
 	private double oppMarginalCost;
 	
-	private double oppMinBoundMC;
-	private double oppMaxBoudMC;
+	private double minBound;
+	private double maxBound;
 	private double oppRatioMC;	
 	
 	private double myCostPerKm;
@@ -61,7 +63,6 @@ public class AuctionTemplate implements AuctionBehavior {
 	
 	private double myPayDay;
 	private double oppPayDay;
-
 	
 	private int round;
 	private double adjustRatio;
@@ -90,23 +91,31 @@ public class AuctionTemplate implements AuctionBehavior {
 		this.oppRatioMC = 0.2;
 		this.myDistance = 0;
 		this.oppDistance = 0;
-		this.adjustRatio = 1.2;
-		
+		this.adjustRatio = 1;
+		this.minBound = 0;
+		this.maxBound = 0;
 		myPlanTasks = new ArrayList<Task>();
 		oppPlanTasks = new ArrayList<Task>();
 		
 		List<Vehicle> vehicles = agent.vehicles();
 		myVehicles = new ArrayList<AuctionVehicle>(vehicles.size());
 		for(Vehicle v : vehicles){
-			System.out.println(v);
 			AuctionVehicle auctionVehicle = new AuctionVehicle(v);
 			myVehicles.add(auctionVehicle);
 		}
-		System.out.println(agent.vehicles());
 		
 		this.myPlan = new AuctionPlan(myVehicles);
 		this.oppPlan = new AuctionPlan(myVehicles);
 		
+		double mean = 0;
+		for (City from : topology.cities()) {
+			for (City to : topology.cities()) {
+				mean += distribution.probability(from, to);
+			}
+		}
+		this.distributionMean = mean / (topology.cities().size()*topology.cities().size());
+		
+		//System.out.println(distributionMean);
 		long seed = -9019554669489983951L;
 		//long seed = -9019554669489983951L * currentCity.hashCode() * agent.id();
 		this.random = new Random(seed);
@@ -153,7 +162,7 @@ public class AuctionTemplate implements AuctionBehavior {
 			}
 		}
 		int x = agent.id()-1;
-		System.out.println("Agent " +  x + " has cost per km of " + oppCostPerKm);
+		//System.out.println("Agent " +  x + " has cost per km of " + oppCostPerKm);
 		oppDistance = oppNewDistance;
 
 		if (winner == agent.id()) {
@@ -163,12 +172,18 @@ public class AuctionTemplate implements AuctionBehavior {
 			myPlan.updatePlan();
 			myPayDay += myBid;
 			myDistance = myNewDistance;
+			if (myPlanTasks.size()>= 4) {
+				adjustRatio += 0.1;
+			}
 		} else {
 			oppPlanTasks.add(previous);
 			oppCost = oppNewCost;
 			oppPlan.updatePlan();
 			oppPayDay += oppBid;
 			oppDistance = oppNewDistance;
+			if (myPlanTasks.size()>= 4) {
+				adjustRatio -= 0.1;
+			}
 		}
 	}
 	
@@ -189,17 +204,54 @@ public class AuctionTemplate implements AuctionBehavior {
 		
 		myMarginalCost =  myNewCost-myCost;
 		oppMarginalCost = oppNewCost-oppCost;
-		
-		double probabilityBonus = 1;
-		
+			
 		
 		double bid;
-		System.out.println(myMarginalCost + " " + myPlanTasks.size());
-		if (myPlanTasks.size() <= 4) {			
+		
+		//System.out.println(myMarginalCost + " " + myNewCost + " " + "" + myCost + " " + myPlanTasks.size());
+		if (myPlanTasks.size() <= 3) {			
 			bid = myMarginalCost * 0.7;
 			return (long) Math.round(bid);
 		} else {
-			bid = myMarginalCost*1.3;
+			
+			minBound = myMarginalCost*0.9;
+			maxBound = oppMarginalCost*1.1;
+			//double probabilityBonus = 1;
+			CentralizedPlan thePlan = myPlan.actualPlan;
+			int vehicle = myPlan.getVehicle(task);
+			double sumProbabilities = 0;
+			int numProbabilities = 0;
+			boolean greater = false;
+			
+			for (int i=0; i< thePlan.planTasks.get(vehicle).size(); i++) {
+				AuctionTask newTask = thePlan.planTasks.get(vehicle).get(i);
+				if (greater) {
+					if (newTask.pickup && distribution.probability(task.pickupCity, newTask.pickupCity) > distributionMean) { 
+						sumProbabilities += distribution.probability(task.pickupCity, newTask.pickupCity);
+						numProbabilities++;
+					}
+					else if (newTask.delivery && distribution.probability(task.pickupCity, newTask.pickupCity) > distributionMean) {
+						sumProbabilities += distribution.probability(task.pickupCity, newTask.deliveryCity);
+						numProbabilities++;
+					}
+					}
+				if (newTask.task.equals(task)) greater = true;
+			}
+			double probabilityBonus = 1;
+			if (numProbabilities > 0)
+				probabilityBonus = 1-2*(sumProbabilities/numProbabilities - distributionMean);
+			
+			if (oppMarginalCost <= myMarginalCost) {
+				bid = Math.max(myMarginalCost, myMarginalCost*adjustRatio);
+				
+			} else {
+				double initialBid = (oppMarginalCost + myMarginalCost) / 2;
+				bid = Math.max(myMarginalCost, initialBid*adjustRatio);
+			}
+			//System.out.println(probabilityBonus);
+			System.out.println(bid-myMarginalCost);
+			//bid = myMarginalCost*1.3;
+
 			return (long) Math.round(bid);
 		}
 
@@ -226,11 +278,15 @@ public class AuctionTemplate implements AuctionBehavior {
             	}
             }
         }
+        //if (slsPlan.planCost() > myPlan.actualPlan.planCost()) slsPlan = myPlan.actualPlan;
         // Final distribution of the tasks, cost and distance
         System.out.println("FINAL PLAN:");
 		System.out.println("	Task distribution: " + slsPlan.toString());
 		System.out.println("	Cost: " + slsPlan.planCost());
 		System.out.println("	Distance: " + slsPlan.planDistance());
+		double benefits = myPayDay-slsPlan.planCost();
+		System.out.println("	Benefits: " + benefits);
+
         //selectedPlan.paint();
 
         List<Plan> plans = new ArrayList<Plan>();

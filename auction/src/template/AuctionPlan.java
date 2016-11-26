@@ -34,13 +34,14 @@ public class AuctionPlan {
 		List<CentralizedPlan> newPlanList = new ArrayList<CentralizedPlan>();
 		AuctionTask auctionedPickUp = new AuctionTask("PICKUP", auctionedTask);
 		AuctionTask auctionedDeliver = new AuctionTask("DELIVERY", auctionedTask);	
-		for(Entry<Integer, LinkedList<AuctionTask>> entry : actualPlan.planTasks.entrySet()){
+		HashMap<Integer, LinkedList<AuctionTask>> planTasksCopy = actualPlan.cloneHashmap(actualPlan.planTasks);
+		for(Entry<Integer, LinkedList<AuctionTask>> entry : planTasksCopy.entrySet()){
 			LinkedList<AuctionTask> taskList = entry.getValue();
 			for(int pos1=0; pos1<taskList.size()+1; pos1++){
 				LinkedList <AuctionTask> newTaskList = new LinkedList<AuctionTask>(taskList);
 				newTaskList.add(pos1, auctionedPickUp);
 				for(int pos2=pos1+1; pos2<newTaskList.size()+1; pos2++){
-					HashMap<Integer, LinkedList<AuctionTask>> newPlanTasks = actualPlan.cloneHashmap(actualPlan.planTasks);
+					HashMap<Integer, LinkedList<AuctionTask>> newPlanTasks = actualPlan.cloneHashmap(planTasksCopy);
 					LinkedList <AuctionTask> newNewTaskList = new LinkedList<AuctionTask>(newTaskList);
 					newNewTaskList.add(pos2, auctionedDeliver);
 					newPlanTasks.put(entry.getKey(), newNewTaskList);
@@ -70,8 +71,8 @@ public class AuctionPlan {
 	
 	public CentralizedPlan getNewPlan(Task task){
 		List<CentralizedPlan> newPlanList = insertTask(task);
-		CentralizedPlan newBestPlan = chooseBestPlan(newPlanList);
-		return newBestPlan;
+		actualPlan = chooseBestPlan(newPlanList);
+		return actualPlan;
 	}
 	
 	public CentralizedPlan getFinalPlan(TaskSet tasks){
@@ -98,5 +99,4 @@ public class AuctionPlan {
 		}
 		return -1;
 	}
-	
 }
