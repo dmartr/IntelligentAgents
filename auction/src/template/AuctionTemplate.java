@@ -77,6 +77,8 @@ public class AuctionTemplate implements AuctionBehavior {
     private long timeout_setup;
     private long timeout_plan;
     
+    private boolean chill;
+    
 	@Override
 	public void setup(Topology topology, TaskDistribution distribution,
 			Agent agent) {
@@ -94,6 +96,7 @@ public class AuctionTemplate implements AuctionBehavior {
 		this.adjustRatio = 1.2;
 		this.minBound = 0;
 		this.maxBound = 0;
+		this.chill = false;
 		myPlanTasks = new ArrayList<Task>();
 		oppPlanTasks = new ArrayList<Task>();
 		
@@ -167,7 +170,6 @@ public class AuctionTemplate implements AuctionBehavior {
 			}
 		}
 		int x = agent.id()-1;
-		System.out.println("Agent " +  x + " has cost per km of " + oppCostPerKm);
 		oppDistance = oppNewDistance;
 
 		if (winner == agent.id()) {
@@ -177,18 +179,14 @@ public class AuctionTemplate implements AuctionBehavior {
 			myPlan.updatePlan();
 			myPayDay += myBid;
 			myDistance = myNewDistance;
-			if (myPlanTasks.size()>= 4) {
-				adjustRatio += 0.05;
-			}
+			adjustRatio += 0.05;
 		} else {
 			oppPlanTasks.add(previous);
 			oppCost = oppNewCost;
 			oppPlan.updatePlan();
 			oppPayDay += oppBid;
 			oppDistance = oppNewDistance;
-			if (myPlanTasks.size()>= 4) {
-				adjustRatio -= 0.05;
-			}
+			adjustRatio -= 0.05;
 		}
 	}
 	
@@ -208,59 +206,60 @@ public class AuctionTemplate implements AuctionBehavior {
 		oppNewDistance = oppNewPlan.planDistance();
 		
 		myMarginalCost =  myNewCost-myCost;
-		oppMarginalCost = oppNewCost-oppCost;
+		oppMarginalCost = (oppNewDistance-oppDistance)*oppCostPerKm;
 		
+		CentralizedPlan thePlan = myPlan.actualPlan;
+		int vehicle = myPlan.getVehicle(task);
 		double bid;
 		
-		if (myPlanTasks.size() < 4) {			
-			bid = myMarginalCost * 0.8;
+		if (myPlanTasks.size() < 4 && round <= 6) {		
+			bid = myMarginalCost * 0.5;
 			return (long) Math.round(bid);
+		} else if (chill) {
+			double initialBid = myMarginalCost;
+			minBound = myMarginalCost;
+			maxBound = Math.max(myMarginalCost*1.5, oppMarginalCost*0.5);
+			//maxBound = task.pickupCity.distanceTo(task.deliveryCity)*myVehicles.get(vehicle).costPerKm;
+		} else if (myPlanTasks.size() < 4 && round > 6) {
+			chill = true;
+			adjustRatio = 1.1;
+			double initialBid = myMarginalCost;
+			minBound = myMarginalCost;
+			maxBound = Math.max(myMarginalCost*1.5, oppMarginalCost*0.5);
 		} else {
-			
-			minBound = myMarginalCost*0.9;
-			maxBound = oppMarginalCost*1.1;
+			adjustRatio = 1;
+			double initialBid = myMarginalCost;
+			minBound = Math.max(myMarginalCost*1.25, oppMarginalCost*0.75) ;
+			maxBound = Math.max(oppMarginalCost*1.5, myMarginalCost*2);
+		}		
 
-			CentralizedPlan thePlan = myPlan.actualPlan;
-			int vehicle = myPlan.getVehicle(task);
-			double sumProbabilities = 0;
-			int numProbabilities = 0;
-			boolean greater = false;
-			
-			for (int i=0; i< thePlan.planTasks.get(vehicle).size(); i++) {
-				AuctionTask newTask = thePlan.planTasks.get(vehicle).get(i);
-				if (greater) {
-					if (newTask.pickup && distribution.probability(task.pickupCity, newTask.pickupCity) > distributionMean) { 
-						sumProbabilities += distribution.probability(task.pickupCity, newTask.pickupCity);
-						numProbabilities++;
-					}
-					else if (newTask.delivery && distribution.probability(task.pickupCity, newTask.pickupCity) > distributionMean) {
-						sumProbabilities += distribution.probability(task.pickupCity, newTask.deliveryCity);
-						numProbabilities++;
-					}
+		
+		double sumProbabilities = 0;
+		int numProbabilities = 0;
+		boolean greater = false;
+		
+		for (int i=0; i< thePlan.planTasks.get(vehicle).size(); i++) {
+			AuctionTask newTask = thePlan.planTasks.get(vehicle).get(i);
+			if (greater) {
+				if (newTask.pickup && distribution.probability(task.pickupCity, newTask.pickupCity) > distributionMean) { 
+					sumProbabilities += distribution.probability(task.pickupCity, newTask.pickupCity);
+					numProbabilities++;
 				}
-				if (newTask.task.equals(task)) greater = true;
-			}
-			double probabilityBonus = 1;
-			if (numProbabilities > 0)
-				probabilityBonus = 1-(sumProbabilities/numProbabilities - distributionMean);
-			
-			if (oppMarginalCost < myMarginalCost) {
-				bid = Math.max(myMarginalCost, myMarginalCost*adjustRatio);
-				
-			} else if (oppMarginalCost == 0) {
-				if (sumProbabilities/numProbabilities < distributionMean) {
-					bid = myMarginalCost;
-				} else {
-					bid = 200;
+				else if (newTask.delivery && distribution.probability(task.pickupCity, newTask.pickupCity) > distributionMean) {
+					sumProbabilities += distribution.probability(task.pickupCity, newTask.deliveryCity);
+					numProbabilities++;
 				}
 			}
-			else {
-				//double initialBid = (oppMarginalCost + myMarginalCost) / 2;
-				bid = Math.max(myMarginalCost, myMarginalCost*adjustRatio*probabilityBonus);
-			}
-
-			return (long) Math.round(bid);
+			if (newTask.task.equals(task)) greater = true;
 		}
+		double probabilityBonus = 1;
+		if (numProbabilities > 0)
+			probabilityBonus = 1-(sumProbabilities/numProbabilities - distributionMean);
+					
+		bid = Math.min(maxBound, myMarginalCost*adjustRatio*probabilityBonus);
+		bid = Math.max(minBound, bid);
+
+		return (long) Math.round(bid);
 
 	}
 
@@ -270,26 +269,26 @@ public class AuctionTemplate implements AuctionBehavior {
         long time_start = System.currentTimeMillis();
         double timeMargin = 0.8;
 		AuctionPlan auctionPlan = new AuctionPlan(myVehicles);
-//		System.out.println("Agent " + agent.id() + " has tasks " + tasks);
+
 		SLS sls = new SLS(myVehicles, new ArrayList<Task>(tasks));
 		CentralizedPlan slsPlan = sls.selectInitialSolutionDistance();
         int MAX_ITERS = 5000;
         for (int i = 0; i<MAX_ITERS; i++) {
         	// Find all possible neighbors
-            if (System.currentTimeMillis() - time_start > allowedTime*timeMargin) {
+            //if (System.currentTimeMillis() - time_start > allowedTime*timeMargin) {
             	ArrayList<CentralizedPlan> neighbors = sls.chooseNeighbors(slsPlan);
             	if (neighbors != null) {
             		// Choose the best plan
             		CentralizedPlan newPlan = sls.localChoice(slsPlan, neighbors);
             		slsPlan = newPlan;
             	}
-            }
+            //}
         }
-
-        if (slsPlan.planCost() > myPlan.actualPlan.planCost()) slsPlan = myPlan.getFinalPlan(tasks, myVehicles);
+        System.out.println(slsPlan.planCost() + " " + myPlan.bestPlan.planCost() );
         //slsPlan = myPlan.getFinalPlan(tasks, myVehicles);
-		//System.out.println("****************** " + slsPlan.planCost() + " " + myPlan.actualPlan.planCost());
 
+        if (slsPlan.planCost() > myPlan.bestPlan.planCost()) slsPlan = myPlan.getFinalPlan(tasks, myVehicles);
+        
         // Final distribution of the tasks, cost and distance
         System.out.println("FINAL PLAN:");
 		System.out.println("	Task distribution: " + slsPlan.toString());
