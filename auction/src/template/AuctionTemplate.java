@@ -249,7 +249,6 @@ public class AuctionTemplate implements AuctionBehavior {
 				bid = Math.max(myMarginalCost, initialBid*adjustRatio);
 			}
 			//System.out.println(probabilityBonus);
-			System.out.println(bid-myMarginalCost);
 			//bid = myMarginalCost*1.3;
 
 			return (long) Math.round(bid);
@@ -259,11 +258,11 @@ public class AuctionTemplate implements AuctionBehavior {
 
 	@Override
 	public List<Plan> plan(List<Vehicle> vehicles, TaskSet tasks) {
+		
         long time_start = System.currentTimeMillis();
         double timeMargin = 0.8;
 		AuctionPlan auctionPlan = new AuctionPlan(myVehicles);
 //		System.out.println("Agent " + agent.id() + " has tasks " + tasks);
-		auctionPlan.getFinalPlan(tasks);
 		SLS sls = new SLS(myVehicles, new ArrayList<Task>(tasks));
 		CentralizedPlan slsPlan = sls.selectInitialSolutionDistance();
         int MAX_ITERS = 5000;
@@ -278,13 +277,18 @@ public class AuctionTemplate implements AuctionBehavior {
             	}
             }
         }
-        //if (slsPlan.planCost() > myPlan.actualPlan.planCost()) slsPlan = myPlan.actualPlan;
+
+        if (slsPlan.planCost() > myPlan.actualPlan.planCost()) slsPlan = myPlan.getFinalPlan(tasks, myVehicles);
+        //slsPlan = myPlan.getFinalPlan(tasks, myVehicles);
+		//System.out.println("****************** " + slsPlan.planCost() + " " + myPlan.actualPlan.planCost());
+
         // Final distribution of the tasks, cost and distance
         System.out.println("FINAL PLAN:");
 		System.out.println("	Task distribution: " + slsPlan.toString());
 		System.out.println("	Cost: " + slsPlan.planCost());
 		System.out.println("	Distance: " + slsPlan.planDistance());
 		double benefits = myPayDay-slsPlan.planCost();
+		System.out.println("    Getting Payed: " + myPayDay);    
 		System.out.println("	Benefits: " + benefits);
 
         //selectedPlan.paint();

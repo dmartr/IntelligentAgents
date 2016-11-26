@@ -55,6 +55,30 @@ public class AuctionPlan {
 		return newPlanList;
 	}
 	
+	public List<CentralizedPlan> insertTask(Task auctionedTask, CentralizedPlan plan){
+		List<CentralizedPlan> newPlanList = new ArrayList<CentralizedPlan>();
+		AuctionTask auctionedPickUp = new AuctionTask("PICKUP", auctionedTask);
+		AuctionTask auctionedDeliver = new AuctionTask("DELIVERY", auctionedTask);	
+		HashMap<Integer, LinkedList<AuctionTask>> planTasksCopy = plan.cloneHashmap(plan.planTasks);
+		for(Entry<Integer, LinkedList<AuctionTask>> entry : planTasksCopy.entrySet()){
+			LinkedList<AuctionTask> taskList = entry.getValue();
+			for(int pos1=0; pos1<taskList.size()+1; pos1++){
+				LinkedList <AuctionTask> newTaskList = new LinkedList<AuctionTask>(taskList);
+				newTaskList.add(pos1, auctionedPickUp);
+				for(int pos2=pos1+1; pos2<newTaskList.size()+1; pos2++){
+					HashMap<Integer, LinkedList<AuctionTask>> newPlanTasks = plan.cloneHashmap(planTasksCopy);
+					LinkedList <AuctionTask> newNewTaskList = new LinkedList<AuctionTask>(newTaskList);
+					newNewTaskList.add(pos2, auctionedDeliver);
+					newPlanTasks.put(entry.getKey(), newNewTaskList);
+					CentralizedPlan  newCentralizedPlan = new CentralizedPlan(newPlanTasks, plan.vehicles);
+					if (newCentralizedPlan.validConstraints()) {
+						newPlanList.add(newCentralizedPlan);
+					}
+				}
+			}
+		}
+		return newPlanList;
+	}
 	private CentralizedPlan chooseBestPlan(List<CentralizedPlan> newPLanList){
 		CentralizedPlan cheapest = null; 
 		double minCost = Integer.MAX_VALUE;
@@ -75,12 +99,13 @@ public class AuctionPlan {
 		return actualPlan;
 	}
 	
-	public CentralizedPlan getFinalPlan(TaskSet tasks){
+	public CentralizedPlan getFinalPlan(TaskSet tasks, List<AuctionVehicle> vehicles){
+		CentralizedPlan finalPlan = new CentralizedPlan(vehicles);
 		for(Task t : tasks){
-			List<CentralizedPlan> newPlanList = insertTask(t);
-			actualPlan = chooseBestPlan(newPlanList);
+			List<CentralizedPlan> newPlanList = insertTask(t, finalPlan);
+			finalPlan = chooseBestPlan(newPlanList);
 		}
-		return actualPlan;
+		return finalPlan;
 	}
 	
 	public CentralizedPlan getBestPlan() {
