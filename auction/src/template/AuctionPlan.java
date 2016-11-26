@@ -11,9 +11,9 @@ import logist.task.TaskSet;
 
 public class AuctionPlan {
 	
-	private AuctionVehicle biggestVehicle;
-	private CentralizedPlan actualPlan;
-	private CentralizedPlan bestPlan;	
+	public AuctionVehicle biggestVehicle;
+	public CentralizedPlan actualPlan;
+	public CentralizedPlan bestPlan;	
 	
 	public AuctionPlan(List<AuctionVehicle> vehicles){
 		double capacity = 0;

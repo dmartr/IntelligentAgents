@@ -193,4 +193,20 @@ public class CentralizedPlan {
     	return nVehicles;
 	} 
 	
+	/**
+	 * Number of vehicles working in the plan
+	 * 
+	 * @return: number of vehicles
+	 */
+	/**
+
+	public double getProbabilityMean(AuctionTask task) {
+		for (AuctionVehicle v : vehicles) {
+    		if (planTasks.get(v.getVehicle()) {
+
+    		}
+    	}
+	} 
+	**/
+	
 }
