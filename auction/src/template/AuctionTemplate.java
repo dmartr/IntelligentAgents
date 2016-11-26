@@ -173,7 +173,7 @@ public class AuctionTemplate implements AuctionBehavior {
 			myPayDay += myBid;
 			myDistance = myNewDistance;
 			if (myPlanTasks.size()>= 4) {
-				adjustRatio += 0.1;
+				adjustRatio += 0.05;
 			}
 		} else {
 			oppPlanTasks.add(previous);
@@ -182,7 +182,7 @@ public class AuctionTemplate implements AuctionBehavior {
 			oppPayDay += oppBid;
 			oppDistance = oppNewDistance;
 			if (myPlanTasks.size()>= 4) {
-				adjustRatio -= 0.1;
+				adjustRatio -= 0.05;
 			}
 		}
 	}
@@ -209,8 +209,9 @@ public class AuctionTemplate implements AuctionBehavior {
 		double bid;
 		
 		//System.out.println(myMarginalCost + " " + myNewCost + " " + "" + myCost + " " + myPlanTasks.size());
-		if (myPlanTasks.size() <= 3) {			
-			bid = myMarginalCost * 0.7;
+		if (myPlanTasks.size() < 4) {			
+			bid = myMarginalCost * 0.75;
+			//System.out.println(bid);
 			return (long) Math.round(bid);
 		} else {
 			
@@ -239,14 +240,21 @@ public class AuctionTemplate implements AuctionBehavior {
 			}
 			double probabilityBonus = 1;
 			if (numProbabilities > 0)
-				probabilityBonus = 1-2*(sumProbabilities/numProbabilities - distributionMean);
+				probabilityBonus = 1-(sumProbabilities/numProbabilities - distributionMean);
 			
-			if (oppMarginalCost <= myMarginalCost) {
+			if (oppMarginalCost < myMarginalCost) {
 				bid = Math.max(myMarginalCost, myMarginalCost*adjustRatio);
 				
-			} else {
+			} else if (oppMarginalCost == 0) {
+				if (sumProbabilities/numProbabilities < distributionMean) {
+					bid = myMarginalCost;
+				} else {
+					bid = 300;
+				}
+			}
+			else {
 				double initialBid = (oppMarginalCost + myMarginalCost) / 2;
-				bid = Math.max(myMarginalCost, initialBid*adjustRatio);
+				bid = Math.max(myMarginalCost, initialBid*adjustRatio*probabilityBonus);
 			}
 			//System.out.println(probabilityBonus);
 			//bid = myMarginalCost*1.3;
