@@ -66,6 +66,8 @@ public class AuctionTemplate implements AuctionBehavior {
 	
 	private int round;
 	private double adjustRatio;
+	private double greedyRatio;
+	private double oppRatio;
 	
 	private ArrayList<AuctionVehicle> myVehicles;
 	private ArrayList<AuctionVehicle> oppVehicles;
@@ -76,8 +78,6 @@ public class AuctionTemplate implements AuctionBehavior {
 	
     private long timeout_setup;
     private long timeout_plan;
-    
-    private boolean chill;
     
 	@Override
 	public void setup(Topology topology, TaskDistribution distribution,
@@ -93,10 +93,11 @@ public class AuctionTemplate implements AuctionBehavior {
 		this.oppRatioMC = 0.2;
 		this.myDistance = 0;
 		this.oppDistance = 0;
-		this.adjustRatio = 1.2;
+		this.adjustRatio = 0.85;
 		this.minBound = 0;
 		this.maxBound = 0;
-		this.chill = false;
+		this.greedyRatio = 0.5;
+		
 		myPlanTasks = new ArrayList<Task>();
 		oppPlanTasks = new ArrayList<Task>();
 		
@@ -140,9 +141,12 @@ public class AuctionTemplate implements AuctionBehavior {
 		long myBid = bids[agent.id()];
 		long oppBid = bids[1-agent.id()];
 		
+		if (oppMarginalCost != 0) oppRatio = Math.min(oppBid/oppMarginalCost, 5);
+		else oppRatio = 1;
+		
 		double myTempDistance = myNewDistance - myDistance;
 		double oppTempDistance = oppNewDistance - oppDistance;
-		//System.out.println(oppDistance + " " + oppNewDistance);
+		System.out.println("Round " + round + ". Winner: " + winner + " " + myBid + " vs " + oppBid);
 		if (round==1) {
 			
 			myCostPerKm = myMarginalCost/myTempDistance;
@@ -159,14 +163,9 @@ public class AuctionTemplate implements AuctionBehavior {
 				myCostPerKm /= 2;
 			}
 			if (oppTempDistance > 0) {
-				if (round<5) {
 					oppCostPerKm = oppMarginalCost/oppTempDistance;
 					oppCostPerKm = Math.max(myCostPerKm*(1-oppRatioMC), oppCostPerKm);
 					oppCostPerKm = Math.min(myCostPerKm*(1+oppRatioMC), oppCostPerKm);
-				
-				} else {
-					oppCostPerKm = oppMarginalCost/oppTempDistance;
-				}
 			}
 		}
 		int x = agent.id()-1;
@@ -179,14 +178,18 @@ public class AuctionTemplate implements AuctionBehavior {
 			myPlan.updatePlan();
 			myPayDay += myBid;
 			myDistance = myNewDistance;
-			adjustRatio += 0.05;
+			if (myPlanTasks.size() > 3)
+			adjustRatio += 0.02;
 		} else {
 			oppPlanTasks.add(previous);
 			oppCost = oppNewCost;
 			oppPlan.updatePlan();
 			oppPayDay += oppBid;
 			oppDistance = oppNewDistance;
-			adjustRatio -= 0.05;
+			if (myPlanTasks.size() > 3)
+			adjustRatio -= 0.02;
+			if (round < 4) greedyRatio += 0.2;
+			greedyRatio = Math.min(1, greedyRatio);
 		}
 	}
 	
@@ -206,33 +209,11 @@ public class AuctionTemplate implements AuctionBehavior {
 		oppNewDistance = oppNewPlan.planDistance();
 		
 		myMarginalCost =  myNewCost-myCost;
-		oppMarginalCost = (oppNewDistance-oppDistance)*oppCostPerKm;
-		
+		oppMarginalCost = Math.max((oppNewDistance-oppDistance)*oppCostPerKm,0);
+
 		CentralizedPlan thePlan = myPlan.actualPlan;
 		int vehicle = myPlan.getVehicle(task);
 		double bid;
-		
-		if (myPlanTasks.size() < 4 && round <= 6) {		
-			bid = myMarginalCost * 0.5;
-			return (long) Math.round(bid);
-		} else if (chill) {
-			double initialBid = myMarginalCost;
-			minBound = myMarginalCost;
-			maxBound = Math.max(myMarginalCost*1.5, oppMarginalCost*0.5);
-			//maxBound = task.pickupCity.distanceTo(task.deliveryCity)*myVehicles.get(vehicle).costPerKm;
-		} else if (myPlanTasks.size() < 4 && round > 6) {
-			chill = true;
-			adjustRatio = 1.1;
-			double initialBid = myMarginalCost;
-			minBound = myMarginalCost;
-			maxBound = Math.max(myMarginalCost*1.5, oppMarginalCost*0.5);
-		} else {
-			adjustRatio = 1;
-			double initialBid = myMarginalCost;
-			minBound = Math.max(myMarginalCost*1.25, oppMarginalCost*0.75) ;
-			maxBound = Math.max(oppMarginalCost*1.5, myMarginalCost*2);
-		}		
-
 		
 		double sumProbabilities = 0;
 		int numProbabilities = 0;
@@ -252,11 +233,43 @@ public class AuctionTemplate implements AuctionBehavior {
 			}
 			if (newTask.task.equals(task)) greater = true;
 		}
+		
 		double probabilityBonus = 1;
-		if (numProbabilities > 0)
-			probabilityBonus = 1-(sumProbabilities/numProbabilities - distributionMean);
-					
-		bid = Math.min(maxBound, myMarginalCost*adjustRatio*probabilityBonus);
+		if (numProbabilities > 0) probabilityBonus = 1-2*(sumProbabilities/numProbabilities - distributionMean);
+		double initialBid;
+		double losingRatio = 1;
+
+		if (myPlanTasks.size() < 4) {
+			bid = myMarginalCost * 0.3;
+			return (long) Math.round(bid);
+		} else {	
+			double myRealCost = task.pickupCity.distanceTo(task.deliveryCity)*myVehicles.get(vehicle).costPerKm;
+			double oppRealCost = task.pickupCity.distanceTo(task.deliveryCity)*oppCostPerKm;
+			if (myMarginalCost == 0 && oppMarginalCost != 0) {
+				System.out.println("Mine is 0 his is not " + oppMarginalCost + " " + oppRealCost );
+				minBound = oppMarginalCost;
+				maxBound = oppRealCost;
+				initialBid = (minBound+maxBound)/2;
+			} else if (myMarginalCost == 0 && oppMarginalCost == 0) {
+				System.out.println("Mine is 0 his is 0");
+				minBound = (myRealCost+oppRealCost)*0.5*greedyRatio;
+				maxBound =  (myRealCost+oppRealCost)*0.5;
+				initialBid = maxBound;
+			} else if (myMarginalCost < oppMarginalCost) {
+				System.out.println("Mine is lower");
+				minBound = (myMarginalCost + oppMarginalCost) / 2;
+				maxBound = myRealCost;
+				initialBid = (myMarginalCost + oppMarginalCost)*0.5;
+			} else {
+				System.out.println("Else " + myMarginalCost + " " + oppMarginalCost);
+				minBound = myMarginalCost*0.8;
+				maxBound = myMarginalCost;
+				initialBid = maxBound;
+			}
+		}
+		
+		bid = Math.min(maxBound, initialBid*adjustRatio*probabilityBonus);
+
 		bid = Math.max(minBound, bid);
 
 		return (long) Math.round(bid);
@@ -265,9 +278,8 @@ public class AuctionTemplate implements AuctionBehavior {
 
 	@Override
 	public List<Plan> plan(List<Vehicle> vehicles, TaskSet tasks) {
-		
         long time_start = System.currentTimeMillis();
-        double timeMargin = 0.8;
+        double timeMargin = 0.75;
 		AuctionPlan auctionPlan = new AuctionPlan(myVehicles);
 
 		SLS sls = new SLS(myVehicles, new ArrayList<Task>(tasks));
@@ -275,20 +287,19 @@ public class AuctionTemplate implements AuctionBehavior {
         int MAX_ITERS = 5000;
         for (int i = 0; i<MAX_ITERS; i++) {
         	// Find all possible neighbors
-            //if (System.currentTimeMillis() - time_start > allowedTime*timeMargin) {
+            if (System.currentTimeMillis() - time_start < allowedTime*timeMargin) {
             	ArrayList<CentralizedPlan> neighbors = sls.chooseNeighbors(slsPlan);
             	if (neighbors != null) {
             		// Choose the best plan
             		CentralizedPlan newPlan = sls.localChoice(slsPlan, neighbors);
             		slsPlan = newPlan;
             	}
-            //}
+            }
         }
-        System.out.println(slsPlan.planCost() + " " + myPlan.bestPlan.planCost() );
         //slsPlan = myPlan.getFinalPlan(tasks, myVehicles);
 
         if (slsPlan.planCost() > myPlan.bestPlan.planCost()) slsPlan = myPlan.getFinalPlan(tasks, myVehicles);
-        
+
         // Final distribution of the tasks, cost and distance
         System.out.println("FINAL PLAN:");
 		System.out.println("	Task distribution: " + slsPlan.toString());
